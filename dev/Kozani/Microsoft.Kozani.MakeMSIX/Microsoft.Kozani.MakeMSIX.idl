@@ -1,0 +1,254 @@
+// Copyright (c) Microsoft Corporation and Contributors.
+// Licensed under the MIT License.
+
+namespace Microsoft.Kozani.MakeMSIX
+{
+    [contractversion(1)]
+    apicontract MakeMSIXContract{};
+
+    /// Options for creating a package
+    [contract(MakeMSIXContract, 1)]
+    runtimeclass PackOptions
+    {
+        /// <summary>
+        /// Created by callers to pass options into CreatePackage
+        /// </summary>
+        PackOptions();
+
+        /// <summary>
+        /// Output path for the full packaged file.
+        /// </summary>
+        String PackageFilePath{ get; set; };
+
+        /// <summary>
+        /// Overwrite PackageFilePath if it already exists.
+        /// Defaults to true.
+        /// </summary>
+        Boolean OverwriteFiles{ get; set; };
+        /// <summary>
+        /// Validates elements of the package during creation.
+        /// Defaults to false.
+        /// </summary>
+        Boolean ValidateFiles{ get; set; };
+    };
+
+    /// Options for creating a Kozani package
+    [contract(MakeMSIXContract, 1)]
+    runtimeclass CreateKozaniPackageOptions
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        CreateKozaniPackageOptions();
+
+        /// <summary>
+        /// Output path for the full packaged file.
+        /// Format must match input file. If packageFilePathToConvert is an appx or msix, then PackageFilePath must be an appx or msix.
+        /// If packageFilePathToConvert is an appxbundle or msixbundle, then PackageFilePath must be an appxbundle or msixbundle.
+        /// </summary>
+        String PackageFilePath{ get; set; };
+
+        /// <summary>
+        /// Optional replacement package publisher.
+        /// If not set, publisher from appxmanifest.xml is unchaged.
+        /// </summary>
+        String PackagePublisher{ get; set; };
+
+        /// <summary>
+        /// Optional replacement package name.
+        /// If not set, name from appxmanifest.xml is unchaged.
+        /// </summary>
+        String PackageName{ get; set; };
+
+        /// <summary>
+        /// Overwrite PackageFilePath if it already exists.
+        /// Defaults to true.
+        /// </summary>
+        Boolean OverwriteFiles{ get; set; };
+        /// <summary>
+        /// Validates elements of the package during creation.
+        /// Defaults to false.
+        /// </summary>
+        Boolean ValidateFiles{ get; set; };
+    };
+
+    /// Options for creating a bundle
+    [contract(MakeMSIXContract, 1)]
+    runtimeclass BundleOptions
+    {
+        /// <summary>
+        /// Created by callers to pass options into Bundle
+        /// </summary>
+        BundleOptions();
+
+        /// <summary>
+        /// Output path for the full bundled file.
+        /// </summary>
+        String BundleFilePath{ get; set; };
+
+        /// <summary>
+        /// Overwrite BundleFilePath if they already exist.
+        /// Defaults to true.
+        /// </summary>
+        Boolean OverwriteFiles{ get; set; };
+
+        /// <summary>
+        /// Create as a flat bundle. Package locations will be stored as external path references
+        /// rather than being stored inside the msixbundle file itself. 
+        /// Defaults to false.
+        /// </summary>
+        Boolean FlatBundle{ get; set; };
+
+        /// <summary>
+        /// Optional. Sets the version in the AppxBundleManifest.xml
+        /// If not set the version is created based on the current time.
+        /// </summary>
+        Windows.ApplicationModel.PackageVersion BundleVersion{ get; set; };
+    };
+
+    /// <summary>
+    /// Options for unpacking a package
+    /// </summary>
+    [contract(MakeMSIXContract, 1)]
+    runtimeclass UnpackOptions
+    {
+        /// <summary>
+        /// Created by callers to pass options into UnpackPackage
+        /// </summary>
+        UnpackOptions();
+
+        /// <summary>
+        /// The output folder to unpack the package into.
+        /// </summary>
+        String UnpackedPackageRootDirectory{ get; set; };
+        /// <summary>
+        /// If true, the operation will overwrite existing files in the UnpackedPackageRootDirectory
+        /// when unpacking.
+        /// If false, the operation will fail if a file already exists.
+        /// </summary>
+        Boolean OverwriteFiles{ get; set; };
+    };
+
+    /// <summary>
+    /// Options for unpacking a package
+    /// </summary>
+    [contract(MakeMSIXContract, 1)]
+    runtimeclass UnbundleOptions
+    {
+        /// <summary>
+        /// Created by callers to pass options into UnpackPackage
+        /// </summary>
+        UnbundleOptions();
+
+        /// <summary>
+        /// The output folder to unpack the bundle package into.
+        /// </summary>
+        String UnbundledPackageRootDirectory{ get; set; };
+        /// <summary>
+        /// If true, the operation will overwrite existing files in the UnbundledPackageRootDirectory
+        /// when unpacking.
+        /// If false, the operation will fail if a file already exists.
+        /// </summary>
+        Boolean OverwriteFiles{ get; set; };
+    };
+
+    /// <summary>
+    /// 
+    /// </summary>
+    [contract(MakeMSIXContract, 1)]
+    runtimeclass CreateMountableImageOptions
+    {
+        /// <summary>
+        /// Created by callers to pass options into CreateMountableImage
+        /// </summary>
+        CreateMountableImageOptions();
+        /// <summary>
+        /// Fixed image size in MB. Valid for vhds and vhdx. CIM images automatically expand.
+        /// Default is 0.
+        /// </summary>
+        UInt32 FixedImageSizeMegabytes{ get; set; };
+
+        /// <summary>
+        /// Make image file expandable. 
+        /// Default is true
+        /// </summary>
+        Boolean DynamicallyExpandable{ get; set; };
+        /// <summary>
+        /// Maximum image size in MB. Valid for vhds and vhdx. CIM images have no limit.
+        /// Default is 1024.
+        /// </summary>
+        UInt32 MaximumExpandableImageSizeMegabytes{ get; set; };
+    };
+
+    /// <summary>
+    /// 
+    /// </summary>
+    [contract(MakeMSIXContract, 1)]
+    runtimeclass AddPackageToImageOptions
+    {
+        /// <summary>
+        /// Created by callers to pass options into AddPackageToImage
+        /// </summary>
+        AddPackageToImageOptions();
+
+        /// <summary>
+        /// Root directory on an image to unpack packages to. 
+        /// Required parameter for adding to CIM files. Optional for vhd\vhdx.
+        /// </summary>
+        String PackageRootDirectoryInImage{ get; set; };
+    };
+
+    /// <summary>
+    /// Static methods for creating and unpacking packages.
+    /// </summary>
+    [contract(MakeMSIXContract, 1)]
+    runtimeclass MakeMSIXManager
+    {
+        /// <summary>
+        /// Creates packages from the directoryPathToPack as specified by the packOptions.
+        /// </summary>
+        static Windows.Foundation.IAsyncAction Pack(String directoryPathToPack, PackOptions packOptions);
+        /// <summary>
+        /// Creates bundles from the directoryPathToBundle as specified by the bundleOptions.
+        /// </summary>
+        static Windows.Foundation.IAsyncAction Bundle(String directoryPathToBundle, BundleOptions bundleOptions);
+        /// <summary>
+        /// Unpacks a package at packageFilePathToUnpack as specified by the unpackOptions.
+        /// </summary>
+        static Windows.Foundation.IAsyncAction Unpack(String packageFilePathToUnpack, UnpackOptions unpackOptions);
+        /// <summary>
+        /// Unbundles a package at bundleFilePathToUnbundle as specified by the unbundleOptions.
+        /// </summary>
+        static Windows.Foundation.IAsyncAction Unbundle(String bundleFilePathToUnbundle,
+            UnbundleOptions unbundleOptions);
+        /// <summary>
+        /// Creates a Kozani package from an existing package.
+        /// packageFilePathToConvert can be an appx, appxbundle, msix, or msixbundle
+        /// </summary>
+        static Windows.Foundation.IAsyncAction CreateKozaniPackage(String packageFilePathToConvert,
+            CreateKozaniPackageOptions createKozaniPackageOptions);
+
+
+        /// <summary>
+        /// Mount the image at imageFilePathToMount
+        /// </summary>
+        static Windows.Foundation.IAsyncAction Mount(String imageFilePathToMount, Boolean readOnly);
+
+        /// <summary>
+        /// Unmount the image that was mounted from imageFilePathToUnmount
+        /// </summary>
+        static Windows.Foundation.IAsyncAction Unmount(String imageFilePathToUnmount);
+
+        /// <summary>
+        /// Create mountable image at imageFilePath. Valid file extensions are vhd, vhdx, and CIM.
+        /// </summary>
+        static Windows.Foundation.IAsyncAction CreateMountableImage(String imageFilePath,
+            CreateMountableImageOptions createMountableImageOptions);
+
+        /// <summary>
+        /// Add the package at packageFilePath to the image at imageFilePath.
+        /// </summary>
+        static Windows.Foundation.IAsyncAction AddPackageToImage(String packageFilePath, String imageFilePath,
+            AddPackageToImageOptions addPackageToImageOptions);
+    };
+}

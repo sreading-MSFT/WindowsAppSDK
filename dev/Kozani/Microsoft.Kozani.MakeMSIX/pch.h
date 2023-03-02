@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation and Contributors.
+// Copyright (c) Microsoft Corporation and Contributors.
 // Licensed under the MIT License.
 
 // pch.h: This is a precompiled header file.
@@ -10,6 +10,8 @@
 #ifndef PCH_H
 #define PCH_H
 
+#include <unknwn.h>
+#include <winrt/Windows.Foundation.h>
 #include <WindowsAppRuntimeInsights.h>
 
 // add headers that you want to pre-compile here

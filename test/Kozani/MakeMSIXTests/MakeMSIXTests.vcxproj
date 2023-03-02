@@ -88,6 +88,7 @@
       <AdditionalDependencies>onecore.lib;onecoreuap.lib;Microsoft.WindowsAppRuntime.lib;wex.common.lib;wex.logger.lib;te.common.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories);$(OutDir)\..\WindowsAppRuntime_DLL</AdditionalLibraryDirectories>
       <DelayLoadDLLs>Microsoft.WindowsAppRuntime.Bootstrap.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
+      <DelayLoadDLLs>Microsoft.WindowsAppRuntime.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
@@ -118,6 +119,12 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.Kozani.MakeMSIX">
+      <HintPath>$(OutDir)\..\Microsoft.Kozani.MakeMSIX\Microsoft.Kozani.MakeMSIX.winmd</HintPath>
+      <IsWinMDFile>true</IsWinMDFile>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="Microsoft.Windows.ApplicationModel.WindowsAppRuntime">
       <HintPath>$(OutDir)\..\WindowsAppRuntime_DLL\Microsoft.Windows.ApplicationModel.WindowsAppRuntime.winmd</HintPath>
       <IsWinMDFile>true</IsWinMDFile>
@@ -137,6 +144,14 @@
     <Import Project="$(NugetPackageDirectory)\Microsoft.Windows.CppWinRT.$(MicrosoftWindowsCppWinRTVersion)\build\native\Microsoft.Windows.CppWinRT.targets" Condition="Exists('$(NugetPackageDirectory)\Microsoft.Windows.CppWinRT.$(MicrosoftWindowsCppWinRTVersion)\build\native\Microsoft.Windows.CppWinRT.targets')" />
     <Import Project="$(NugetPackageDirectory)\Microsoft.Windows.ImplementationLibrary.$(MicrosoftWindowsImplementationLibraryVersion)\build\native\Microsoft.Windows.ImplementationLibrary.targets" Condition="Exists('$(NugetPackageDirectory)\Microsoft.Windows.ImplementationLibrary.$(MicrosoftWindowsImplementationLibraryVersion)\build\native\Microsoft.Windows.ImplementationLibrary.targets')" />
   </ImportGroup>
+  <Target Name="CopyFiles" AfterTargets="AfterBuild">
+    <Copy SourceFiles="$(OutDir)\..\WindowsAppRuntime_BootstrapDLL\Microsoft.WindowsAppRuntime.Bootstrap.dll" DestinationFolder="$(OutDir)" />
+    <Copy SourceFiles="$(OutDir)\..\WindowsAppRuntime_DLL\Microsoft.WindowsAppRuntime.dll" DestinationFolder="$(OutDir)" />
+    <Copy SourceFiles="$(OutDir)\..\Microsoft.Kozani.MakeMSIX\Microsoft.Kozani.MakeMSIX.dll" DestinationFolder="$(OutDir)" />
+    <Copy SourceFiles="$(OutDir)\..\Microsoft.Kozani.MakeMSIX\Microsoft.Kozani.MakeMSIX.pdb" DestinationFolder="$(OutDir)" />
+    <Copy SourceFiles="$(WindowsSdkDir)\bin\$(TargetPlatformVersion)\$(PlatformShortName)\MrmSupport.dll" DestinationFolder="$(OutDir)" />
+
+  </Target>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>

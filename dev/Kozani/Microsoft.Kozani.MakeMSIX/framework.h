@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation and Contributors.
+// Copyright (c) Microsoft Corporation and Contributors.
 // Licensed under the MIT License.
 
 #pragma once
@@ -26,5 +26,3 @@
 
 #include <appmodel.identity.h>
 #include <security.integritylevel.h>
-
-#include "makemsix.h"
