@@ -26,3 +26,8 @@ static const std::wstring msResourceScheme = L"ms-resource:";
 static const std::wstring msResourceFileUriPath = L"Files";
 static const std::wstring msResourceResourceUriPath = L"Resources";
 static const std::wstring priDefaultQualifierScore = L"1.0";
+static const std::wstring manifestApplicationQuery = L"/*[local-name()='Package']/*[local-name()='Applications']/*[local-name()='Application']";
+static const std::wstring manifestUap10Namespace = L"http://schemas.microsoft.com/appx/manifest/uap/windows10/10";
+static const std::wstring manifestKozaniHostRuntime = L"KozaniHostRuntime";
+static const std::wstring packageIdentityPublisherQuery = L"/*[local-name()='Package']/*[local-name()='Identity']/@Publisher";
+static const std::wstring packageIdentityDependenciesQuery = L"/*[local-name()='Package']/*[local-name()='Dependencies']";

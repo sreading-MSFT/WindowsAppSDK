@@ -37,12 +37,12 @@ namespace Microsoft.Kozani.MakeMSIX
     runtimeclass CreateKozaniPackageOptions
     {
         /// <summary>
-        /// 
+        /// Created by callers to pass options into CreateKozaniPackage
         /// </summary>
         CreateKozaniPackageOptions();
 
         /// <summary>
-        /// Output path for the full packaged file.
+        /// Output path for the kozani packaged file.
         /// Format must match input file. If packageFilePathToConvert is an appx or msix, then PackageFilePath must be an appx or msix.
         /// If packageFilePathToConvert is an appxbundle or msixbundle, then PackageFilePath must be an appxbundle or msixbundle.
         /// </summary>
@@ -113,7 +113,7 @@ namespace Microsoft.Kozani.MakeMSIX
     runtimeclass UnpackOptions
     {
         /// <summary>
-        /// Created by callers to pass options into UnpackPackage
+        /// Created by callers to pass options into Unpack
         /// </summary>
         UnpackOptions();
 
@@ -162,41 +162,38 @@ namespace Microsoft.Kozani.MakeMSIX
         /// Created by callers to pass options into CreateMountableImage
         /// </summary>
         CreateMountableImageOptions();
-        /// <summary>
-        /// Fixed image size in MB. Valid for vhds and vhdx. CIM images automatically expand.
-        /// Default is 0.
-        /// </summary>
-        UInt32 FixedImageSizeMegabytes{ get; set; };
 
         /// <summary>
-        /// Make image file expandable. 
-        /// Default is true
+        /// Output path for the image file.
+        /// Valid file extensions are vhd, vhdx, and CIM.
         /// </summary>
-        Boolean DynamicallyExpandable{ get; set; };
-        /// <summary>
-        /// Maximum image size in MB. Valid for vhds and vhdx. CIM images have no limit.
-        /// Default is 1024.
-        /// </summary>
-        UInt32 MaximumExpandableImageSizeMegabytes{ get; set; };
-    };
-
-    /// <summary>
-    /// 
-    /// </summary>
-    [contract(MakeMSIXContract, 1)]
-    runtimeclass AddPackageToImageOptions
-    {
-        /// <summary>
-        /// Created by callers to pass options into AddPackageToImage
-        /// </summary>
-        AddPackageToImageOptions();
+        String ImageFilePath{ get; set; };
 
         /// <summary>
-        /// Root directory on an image to unpack packages to. 
-        /// Required parameter for adding to CIM files. Optional for vhd\vhdx.
+        /// Root directory path for packages inside the image.
+        /// Defaults to "WindowsApps"
         /// </summary>
         String PackageRootDirectoryInImage{ get; set; };
+
+        /// <summary>
+        /// If true, the operation will overwrite an existing file in the ImageFilePath
+        /// when unpacking.
+        /// If false, the operation will fail if the file already exists.
+        /// </summary>
+        Boolean OverwriteFiles{ get; set; };
     };
+
+    runtimeclass PackageId
+    {
+        String Name { get; set; };
+        Windows.ApplicationModel.PackageVersion Version { get; set; };
+        Windows.System.ProcessorArchitecture Architecture{ get; set; };
+        String ResourceId{ get; set; };
+        String Publisher{ get; set; };
+        String PublisherId{ get; set; };
+        String FullName{ get; set; };
+        String FamilyName{ get; set; };
+    }
 
     /// <summary>
     /// Static methods for creating and unpacking packages.
@@ -219,36 +216,29 @@ namespace Microsoft.Kozani.MakeMSIX
         /// <summary>
         /// Unbundles a package at bundleFilePathToUnbundle as specified by the unbundleOptions.
         /// </summary>
-        static Windows.Foundation.IAsyncAction Unbundle(String bundleFilePathToUnbundle,
+        static Windows.Foundation.IAsyncAction Unbundle(
+            String bundleFilePathToUnbundle,
             UnbundleOptions unbundleOptions);
+
         /// <summary>
         /// Creates a Kozani package from an existing package.
         /// packageFilePathToConvert can be an appx, appxbundle, msix, or msixbundle
         /// </summary>
-        static Windows.Foundation.IAsyncAction CreateKozaniPackage(String packageFilePathToConvert,
+        static Windows.Foundation.IAsyncAction CreateKozaniPackage(
+            String packageFilePathToConvert,
             CreateKozaniPackageOptions createKozaniPackageOptions);
 
-
         /// <summary>
-        /// Mount the image at imageFilePathToMount
+        /// Creates a mountable image that contains the packages at packageFilePathsToAdd.
+        /// Can be used for Azure App Attach.
         /// </summary>
-        static Windows.Foundation.IAsyncAction Mount(String imageFilePathToMount, Boolean readOnly);
-
-        /// <summary>
-        /// Unmount the image that was mounted from imageFilePathToUnmount
-        /// </summary>
-        static Windows.Foundation.IAsyncAction Unmount(String imageFilePathToUnmount);
-
-        /// <summary>
-        /// Create mountable image at imageFilePath. Valid file extensions are vhd, vhdx, and CIM.
-        /// </summary>
-        static Windows.Foundation.IAsyncAction CreateMountableImage(String imageFilePath,
+        static Windows.Foundation.IAsyncAction CreateMountableImage(
+            Windows.Foundation.Collections.IVector<String> packageFilePathsToAdd,
             CreateMountableImageOptions createMountableImageOptions);
 
         /// <summary>
-        /// Add the package at packageFilePath to the image at imageFilePath.
+        /// Gets the identity information about a package 
         /// </summary>
-        static Windows.Foundation.IAsyncAction AddPackageToImage(String packageFilePath, String imageFilePath,
-            AddPackageToImageOptions addPackageToImageOptions);
+        static Windows.Foundation.IAsyncOperation<PackageId> GetPackageIdentity(String packagePath);
     };
 }

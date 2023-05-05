@@ -10,16 +10,16 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
     {
         CreateMountableImageOptions() = default;
 
-        UINT32 FixedImageSizeMegabytes();
-        void FixedImageSizeMegabytes(UINT32);
-        bool DynamicallyExpandable();
-        void DynamicallyExpandable(bool);
-        UINT32 MaximumExpandableImageSizeMegabytes();
-        void MaximumExpandableImageSizeMegabytes(UINT32);
+        hstring ImageFilePath();
+        void ImageFilePath(hstring);
+        hstring PackageRootDirectoryInImage();
+        void PackageRootDirectoryInImage(hstring);
+        bool OverwriteFiles();
+        void OverwriteFiles(bool);
 
-        UINT32 mFixedImageSizeMegabytes{};
-        UINT32 mMaximumExpandableImageSizeMegabytes{};
-        bool mDynamicallyExpandable{};
+        hstring mImageFilePath{};
+        hstring mPackageRootDirectoryInImage{};
+        bool mOverwriteFiles{};
     };
 }
 

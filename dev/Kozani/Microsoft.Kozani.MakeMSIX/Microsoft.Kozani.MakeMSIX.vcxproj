@@ -126,7 +126,6 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AddPackageToImageOptions.h" />
     <ClInclude Include="Constants.hpp" />
     <ClInclude Include="CreateKozaniPackageOptions.h" />
     <ClInclude Include="CreateKozaniPackageProvider.hpp" />
@@ -142,7 +141,6 @@
     <ClInclude Include="UnbundleOptions.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AddPackageToImageOptions.cpp" />
     <ClCompile Include="CreateKozaniPackageOptions.cpp" />
     <ClCompile Include="CreateKozaniPackageProvider.cpp" />
     <ClCompile Include="CreateMountableImageOptions.cpp" />

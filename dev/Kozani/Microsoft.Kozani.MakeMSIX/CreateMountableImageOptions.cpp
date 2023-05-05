@@ -7,28 +7,28 @@
 
 namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
 {
-    UINT32 CreateMountableImageOptions::FixedImageSizeMegabytes()
+    void CreateMountableImageOptions::ImageFilePath(hstring value)
     {
-        return mFixedImageSizeMegabytes;
+        mImageFilePath = value;
     }
-    void CreateMountableImageOptions::FixedImageSizeMegabytes(UINT32 value)
+    hstring CreateMountableImageOptions::ImageFilePath()
     {
-        mFixedImageSizeMegabytes = value;
+        return mImageFilePath;
     }
-    bool CreateMountableImageOptions::DynamicallyExpandable()
+    void CreateMountableImageOptions::PackageRootDirectoryInImage(hstring value)
     {
-        return mDynamicallyExpandable;
+        mPackageRootDirectoryInImage = value;
     }
-    void CreateMountableImageOptions::DynamicallyExpandable(bool value)
+    hstring CreateMountableImageOptions::PackageRootDirectoryInImage()
     {
-        mDynamicallyExpandable = value;
+        return mPackageRootDirectoryInImage;
     }
-    UINT32 CreateMountableImageOptions::MaximumExpandableImageSizeMegabytes()
+    bool CreateMountableImageOptions::OverwriteFiles()
     {
-        return mMaximumExpandableImageSizeMegabytes;
+        return mOverwriteFiles;
     }
-    void CreateMountableImageOptions::MaximumExpandableImageSizeMegabytes(UINT32 value)
+    void CreateMountableImageOptions::OverwriteFiles(bool value)
     {
-        mMaximumExpandableImageSizeMegabytes = value;
+        mOverwriteFiles = value;
     }
 }

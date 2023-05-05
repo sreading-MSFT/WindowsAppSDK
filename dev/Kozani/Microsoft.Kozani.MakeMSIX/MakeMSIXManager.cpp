@@ -111,14 +111,14 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
         return S_OK;
     }
 
-    std::list<std::wstring> GetCommandLineArgumentsForMakeAppxPack(std::wstring directoryToPack, std::wstring packageOutputPath, PackOptions packOptions)
+    std::list<std::wstring> GetCommandLineArgumentsForMakeAppxPack(std::wstring directoryToPack, PackOptions packOptions)
     {
         std::list<std::wstring> arguments;
         arguments.push_back(L"pack");
         arguments.push_back(L"/d");
         arguments.push_back(directoryToPack);
         arguments.push_back(L"/p");
-        arguments.push_back(packageOutputPath);
+        arguments.push_back(packOptions.PackageFilePath().c_str());
         if (packOptions.OverwriteFiles())
         {
             arguments.push_back(L"/o");
@@ -132,13 +132,63 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
             arguments.push_back(L"/nv");
             arguments.push_back(L"/nfv");
         }
-        /*if (!packOptions.EncryptionKeyFilePath().empty())
-        {
-            arguments.push_back(L"/kf");
-            arguments.push_back(packOptions.EncryptionKeyFilePath().c_str());
-        }*/
         return arguments;
     }
+    std::list<std::wstring> GetCommandLineArgumentsForMakeAppxUnpack(std::wstring packageToUnpack, UnpackOptions unpackOptions)
+    {
+        std::list<std::wstring> arguments;
+        arguments.push_back(L"unpack");
+        arguments.push_back(L"/p");
+        arguments.push_back(packageToUnpack);
+        arguments.push_back(L"/d");
+        arguments.push_back(unpackOptions.UnpackedPackageRootDirectory().c_str());
+        if (unpackOptions.OverwriteFiles())
+        {
+            arguments.push_back(L"/o");
+        }
+        else
+        {
+            arguments.push_back(L"/no");
+        }
+        return arguments;
+    }
+    std::list<std::wstring> GetCommandLineArgumentsForMakeAppxUnbundle(std::wstring packageToUnbundle, UnbundleOptions unbundleOptions)
+    {
+        std::list<std::wstring> arguments;
+        arguments.push_back(L"unbundle");
+        arguments.push_back(L"/p");
+        arguments.push_back(packageToUnbundle);
+        arguments.push_back(L"/d");
+        arguments.push_back(unbundleOptions.UnbundledPackageRootDirectory().c_str());
+        if (unbundleOptions.OverwriteFiles())
+        {
+            arguments.push_back(L"/o");
+        }
+        else
+        {
+            arguments.push_back(L"/no");
+        }
+        return arguments;
+    }
+    std::list<std::wstring> GetCommandLineArgumentsForMakeAppxBundle(std::wstring directoryToBundle, BundleOptions bundleOptions)
+    {
+        std::list<std::wstring> arguments;
+        arguments.push_back(L"bundle");
+        arguments.push_back(L"/d");
+        arguments.push_back(directoryToBundle);
+        arguments.push_back(L"/p");
+        arguments.push_back(bundleOptions.BundleFilePath().c_str());
+        if (bundleOptions.OverwriteFiles())
+        {
+            arguments.push_back(L"/o");
+        }
+        else
+        {
+            arguments.push_back(L"/no");
+        }
+        return arguments;
+    }
+
 
     HRESULT ValidateCreatePackageArguments(hstring directoryPathToPack, PackOptions packOptions)
     {
@@ -184,79 +234,130 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
         return S_OK;
     }
 
-    HRESULT RunCreatePackageOperation(hstring directoryPathToPack, PackOptions packOptions)
-    {
-        if (!packOptions.PackageFilePath().empty())
-        {
-            std::list<std::wstring > arguments = GetCommandLineArgumentsForMakeAppxPack(directoryPathToPack.c_str(), packOptions.PackageFilePath().c_str(), packOptions);
-            RETURN_IF_FAILED(LaunchMakeAppxWithArguments(arguments));
-        }
-        /*if (!packOptions.KozaniPackageFilePath().empty())
-        {
-            std::wstring tempDirectory{};
-            CreateTempDirectory(tempDirectory);
-            RETURN_IF_FAILED(CreateKozaniPackageLayout(directoryPathToPack.c_str(), tempDirectory));
-
-            // TODO: SkipValidation currently must be set to false due to known missing required non-resource files (exes and dlls).
-            packOptions.ValidateFiles(false);
-            std::list<std::wstring> arguments = GetCommandLineArgumentsForMakeAppxPack(tempDirectory, packOptions.KozaniPackageFilePath().c_str(), packOptions);
-            RETURN_IF_FAILED(LaunchMakeAppxWithArguments(arguments));
-        }*/
-        return S_OK;;
-    }
-
     Windows::Foundation::IAsyncAction MakeMSIXManager::Pack(hstring directoryPathToPack, PackOptions packOptions)
     {
-        HRESULT hrValidate = ValidateCreatePackageArguments(directoryPathToPack, packOptions);
-        if (FAILED(hrValidate))
-        {
-            winrt::throw_hresult(hrValidate);
-        }
+        winrt::check_hresult(ValidateCreatePackageArguments(directoryPathToPack, packOptions));
 
         // Package creation is expected to be slow.
         co_await winrt::resume_background();
 
-        HRESULT hrCreate = RunCreatePackageOperation(directoryPathToPack, packOptions);
-        if (FAILED(hrCreate))
-        {
-            winrt::throw_hresult(hrCreate);
-        }
+        std::list<std::wstring> arguments = GetCommandLineArgumentsForMakeAppxPack(directoryPathToPack.c_str(), packOptions);
+        winrt::check_hresult(LaunchMakeAppxWithArguments(arguments));
+
         co_return;
     }
 
     Windows::Foundation::IAsyncAction MakeMSIXManager::Unpack(hstring packageFilePathToUnpack, UnpackOptions unpackOptions)
     {
-        winrt::throw_hresult(E_NOTIMPL);
+        co_await winrt::resume_background();
+
+        std::list<std::wstring> arguments = GetCommandLineArgumentsForMakeAppxUnpack(packageFilePathToUnpack.c_str(), unpackOptions);
+        winrt::check_hresult(LaunchMakeAppxWithArguments(arguments));
     }
+
     Windows::Foundation::IAsyncAction MakeMSIXManager::Bundle(hstring directoryPathToBundle, BundleOptions bundleOptions)
     {
-        winrt::throw_hresult(E_NOTIMPL);
+        co_await winrt::resume_background();
+
+        std::list<std::wstring> arguments = GetCommandLineArgumentsForMakeAppxBundle(directoryPathToBundle.c_str(), bundleOptions);
+        winrt::check_hresult(LaunchMakeAppxWithArguments(arguments));
     }
+
     Windows::Foundation::IAsyncAction MakeMSIXManager::Unbundle(hstring bundleFilePathToUnbundle, UnbundleOptions unbundleOptions)
     {
-        winrt::throw_hresult(E_NOTIMPL);
+        co_await winrt::resume_background();
+
+        std::list<std::wstring> arguments = GetCommandLineArgumentsForMakeAppxUnbundle(bundleFilePathToUnbundle.c_str(), unbundleOptions);
+        winrt::check_hresult(LaunchMakeAppxWithArguments(arguments));
     }
+
+
+    Windows::Foundation::IAsyncAction CreateKozaniPackageFromPackage(hstring packageFilePathToConvert,
+            CreateKozaniPackageOptions createKozaniPackageOptions)
+    {
+        std::wstring tempFullPackageUnpackDirectory{};
+        winrt::check_hresult(CreateTempDirectory(tempFullPackageUnpackDirectory));
+        UnpackOptions unpackOptions = UnpackOptions();
+        unpackOptions.OverwriteFiles(true);
+        unpackOptions.UnpackedPackageRootDirectory(tempFullPackageUnpackDirectory);
+        co_await MakeMSIXManager::Unpack(packageFilePathToConvert, unpackOptions);
+
+        std::wstring tempKozaniLayoutDirectory{};
+        CreateTempDirectory(tempKozaniLayoutDirectory);
+        winrt::check_hresult(CreateKozaniPackageLayout(tempFullPackageUnpackDirectory, tempKozaniLayoutDirectory));
+
+        PackOptions packOptions = PackOptions();
+        // TODO: SkipValidation currently must be set to false due to known missing required non-resource files (exes and dlls).
+        packOptions.ValidateFiles(false);
+        packOptions.PackageFilePath(createKozaniPackageOptions.PackageFilePath().c_str());
+        std::list<std::wstring> arguments = GetCommandLineArgumentsForMakeAppxPack(tempKozaniLayoutDirectory, packOptions);
+        winrt::check_hresult(LaunchMakeAppxWithArguments(arguments));
+        co_return;
+    }
+
     Windows::Foundation::IAsyncAction MakeMSIXManager::CreateKozaniPackage(hstring packageFilePathToConvert,
             CreateKozaniPackageOptions createKozaniPackageOptions)
     {
-        winrt::throw_hresult(E_NOTIMPL);
-    }
+        // Package creation is expected to be slow.
+        co_await winrt::resume_background();
 
-    Windows::Foundation::IAsyncAction MakeMSIXManager::Mount(hstring imageFilePathToMount, bool readOnly)
-    {
-        winrt::throw_hresult(E_NOTIMPL);
+        std::filesystem::path packagePath{ packageFilePathToConvert.c_str()};
+        std::wstring packagePathExtension{ packagePath.extension() };
+        std::transform(packagePathExtension.begin(), packagePathExtension.end(), packagePathExtension.begin(), tolower);
+        if (packagePathExtension.ends_with(L".msixbundle") ||
+            packagePathExtension.ends_with(L".appxbundle"))
+        {
+            std::wstring tempUnbundleDirectory{};
+            winrt::check_hresult(CreateTempDirectory(tempUnbundleDirectory));
+
+            UnbundleOptions unbundleOptions = UnbundleOptions();
+            unbundleOptions.OverwriteFiles(true);
+            unbundleOptions.UnbundledPackageRootDirectory(tempUnbundleDirectory);
+            Unbundle(packageFilePathToConvert, unbundleOptions).get();
+
+            std::wstring tempKozaniBundlePackageDirectory{};
+            winrt::check_hresult(CreateTempDirectory(tempKozaniBundlePackageDirectory));
+
+            for (const auto& file : std::filesystem::directory_iterator(tempUnbundleDirectory))
+            {
+                std::wstring fileExtension{ file.path().extension() };
+                std::transform(fileExtension.begin(), fileExtension.end(), fileExtension.begin(), tolower);
+                if ((fileExtension.compare(L".appx") != 0) &&
+                    (fileExtension.compare(L".msix") != 0))
+                {
+                    continue;
+                }
+
+                std::filesystem::path tempKozaniBundledPackageOutputPath{ tempKozaniBundlePackageDirectory.c_str() };
+                tempKozaniBundledPackageOutputPath /= file.path().filename();
+                CreateKozaniPackageOptions bundledKozaniPackageOptions = CreateKozaniPackageOptions();
+                bundledKozaniPackageOptions.OverwriteFiles(true);
+                bundledKozaniPackageOptions.PackageFilePath(tempKozaniBundledPackageOutputPath.c_str());
+                CreateKozaniPackageFromPackage(file.path().c_str(), bundledKozaniPackageOptions).get();
+            }
+
+            BundleOptions bundleOptions = BundleOptions();
+            bundleOptions.OverwriteFiles(true);
+            bundleOptions.BundleFilePath(createKozaniPackageOptions.PackageFilePath());
+            Bundle(tempKozaniBundlePackageDirectory.c_str(), bundleOptions).get();
+        }
+        else if (packagePathExtension.ends_with(L".msix") ||
+            packagePathExtension.ends_with(L".appx"))
+        {
+            CreateKozaniPackageFromPackage(packageFilePathToConvert, createKozaniPackageOptions).get();
+        }
+
+        co_return;
     }
-    Windows::Foundation::IAsyncAction MakeMSIXManager::Unmount(hstring imageFilePathToUnmount)
-    {
-        winrt::throw_hresult(E_NOTIMPL);
-    }
-    Windows::Foundation::IAsyncAction MakeMSIXManager::CreateMountableImage(hstring imageFilePath,
+    Windows::Foundation::IAsyncAction MakeMSIXManager::CreateMountableImage(
+        winrt::Windows::Foundation::Collections::IVector<hstring> packageFilePathsToAdd,
         CreateMountableImageOptions createMountableImageOptions)
     {
         winrt::throw_hresult(E_NOTIMPL);
     }
-    Windows::Foundation::IAsyncAction MakeMSIXManager::AddPackageToImage(hstring packageFilePath, hstring imageFilePath,
-        AddPackageToImageOptions addPackageToImageOptions)
+
+    Windows::Foundation::IAsyncOperation<PackageId> MakeMSIXManager::GetPackageIdentity(
+        hstring packagePath)
     {
         winrt::throw_hresult(E_NOTIMPL);
     }

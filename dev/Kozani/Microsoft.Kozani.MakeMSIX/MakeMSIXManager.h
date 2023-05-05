@@ -15,13 +15,11 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
         static Windows::Foundation::IAsyncAction Bundle(hstring directoryPathToBundle, BundleOptions bundleOptions);
         static Windows::Foundation::IAsyncAction Unbundle(hstring packageFilePathToUnbundle, UnbundleOptions unbundleOptions);
         static Windows::Foundation::IAsyncAction CreateKozaniPackage(hstring packageFilePathToConvert, CreateKozaniPackageOptions createKozaniPackageOptions);
-
-        static Windows::Foundation::IAsyncAction Mount(hstring imageFilePathToMount, bool readOnly);
-        static Windows::Foundation::IAsyncAction Unmount(hstring imageFilePathToUnmount);
-        static Windows::Foundation::IAsyncAction CreateMountableImage(hstring imageFilePath,
+        static Windows::Foundation::IAsyncAction CreateMountableImage(
+            winrt::Windows::Foundation::Collections::IVector<hstring> packageFilePathsToAdd,
             CreateMountableImageOptions createMountableImageOptions);
-        static Windows::Foundation::IAsyncAction AddPackageToImage(hstring packageFilePath, hstring imageFilePath,
-            AddPackageToImageOptions addPackageToImageOptions);
+        static Windows::Foundation::IAsyncOperation<PackageId> GetPackageIdentity(
+            hstring packagePath);
     };
 }
 
