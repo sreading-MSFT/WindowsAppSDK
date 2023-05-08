@@ -287,8 +287,7 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
         winrt::check_hresult(CreateKozaniPackageLayout(tempFullPackageUnpackDirectory, tempKozaniLayoutDirectory));
 
         PackOptions packOptions = PackOptions();
-        // TODO: SkipValidation currently must be set to false due to known missing required non-resource files (exes and dlls).
-        packOptions.ValidateFiles(false);
+        packOptions.OverwriteFiles(true);
         packOptions.PackageFilePath(createKozaniPackageOptions.PackageFilePath().c_str());
         std::list<std::wstring> arguments = GetCommandLineArgumentsForMakeAppxPack(tempKozaniLayoutDirectory, packOptions);
         winrt::check_hresult(LaunchMakeAppxWithArguments(arguments));

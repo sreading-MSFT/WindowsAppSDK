@@ -285,8 +285,10 @@ std::list<std::wstring> GetQueries()
         L"/*[local-name()='Package']/*[local-name()='Applications']/*[local-name()='Application']/*[local-name()='VisualElements']/@Square44x44Logo",
         L"/*[local-name()='Package']/*[local-name()='Applications']/*[local-name()='Application']/*[local-name()='VisualElements']/*[local-name()='DefaultTile']/@WideLogo",
         L"/*[local-name()='Package']/*[local-name()='Applications']/*[local-name()='Application']/*[local-name()='VisualElements']/*[local-name()='DefaultTile']/@Wide310x150Logo",
+        L"/*[local-name()='Package']/*[local-name()='Applications']/*[local-name()='Application']/*[local-name()='VisualElements']/*[local-name()='DefaultTile']/@Square70x70Logo",
         L"/*[local-name()='Package']/*[local-name()='Applications']/*[local-name()='Application']/*[local-name()='VisualElements']/*[local-name()='DefaultTile']/@Square71x71Logo",
         L"/*[local-name()='Package']/*[local-name()='Applications']/*[local-name()='Application']/*[local-name()='VisualElements']/*[local-name()='DefaultTile']/@Square310x310Logo",
+        L"/*[local-name()='Package']/*[local-name()='Applications']/*[local-name()='Application']/*[local-name()='VisualElements']/*[local-name()='DefaultTile']/@ShortName",
         L"/*[local-name()='Package']/*[local-name()='Applications']/*[local-name()='Application']/*[local-name()='VisualElements']/*[local-name()='SplashScreen']/@Image",
         L"/*[local-name()='Package']/*[local-name()='Applications']/*[local-name()='Application']/*[local-name()='VisualElements']/*[local-name()='LockScreen']/@BadgeLogo",
     };
@@ -397,32 +399,47 @@ HRESULT ModifyManifest(
 
     winrt::Windows::Data::Xml::Dom::IXmlNode packageNode = manifestDocElement.SelectSingleNode(L"/*[local-name()='Package']");
 
+    // Add uap10 namespace if needed.
     if (packageNode.Attributes().GetNamedItem(L"xmlns:uap10") == nullptr)
     {
-        winrt::Windows::Data::Xml::Dom::IXmlNode namespaceNode = manifestDocElement.CreateAttribute(L"xmlns:uap10");
+        winrt::Windows::Data::Xml::Dom::IXmlNode namespaceNode = manifestDocElement.CreateAttributeNS(winrt::box_value(manifestXmlNamespace), L"xmlns:uap10");
         namespaceNode.InnerText(manifestUap10Namespace);
         packageNode.Attributes().SetNamedItem(namespaceNode);
     }
 
-    winrt::Windows::Data::Xml::Dom::IXmlNode dependencyNode = manifestDocElement.SelectSingleNode(packageIdentityDependenciesQuery.c_str());
-    winrt::Windows::Data::Xml::Dom::IXmlNode hostRuntimeDepNode = manifestDocElement.CreateElementNS(winrt::box_value(manifestUap10Namespace), L"HostRuntimeDependency");
+    // Remove any framework dependencies.
+    winrt::Windows::Data::Xml::Dom::IXmlNode dependencyNode = manifestDocElement.SelectSingleNode(manifestDependenciesQuery.c_str());
+    winrt::Windows::Data::Xml::Dom::XmlNodeList packageDependencies = dependencyNode.SelectNodes(manifestDependenciesPackageDependenciesQuery.c_str());
+    for (winrt::Windows::Data::Xml::Dom::IXmlNode packageDependencyNode : packageDependencies)
+    {
+        dependencyNode.RemoveChild(packageDependencyNode);
+    }
 
+    winrt::Windows::Data::Xml::Dom::XmlNodeList targetDeviceFamilyNodes = dependencyNode.SelectNodes(manifestTargetDeviceFamilyQuery.c_str());
+    for (winrt::Windows::Data::Xml::Dom::IXmlNode targetDeviceFamilyNode : targetDeviceFamilyNodes)
+    {
+        // TODO: MaxVersionTested needs to be confirmed somewhere. Probably better if up front?
+        winrt::Windows::Data::Xml::Dom::IXmlNode minVersion = targetDeviceFamilyNode.Attributes().RemoveNamedItem(L"MinVersion");
+        minVersion.InnerText(L"10.0.19003.0");
+        targetDeviceFamilyNode.Attributes().SetNamedItem(minVersion);
+    }
+
+    // Add HostRuntime dependency.
+    winrt::Windows::Data::Xml::Dom::IXmlNode hostRuntimeDepNode = manifestDocElement.CreateElementNS(winrt::box_value(manifestUap10Namespace), L"HostRuntimeDependency");
+    hostRuntimeDepNode.Prefix(winrt::box_value(L"uap10"));
     winrt::Windows::Data::Xml::Dom::IXmlNode hostRuntimeName = manifestDocElement.CreateAttribute(L"Name");
     hostRuntimeName.InnerText(manifestKozaniHostRuntime);
     hostRuntimeDepNode.Attributes().SetNamedItem(hostRuntimeName);
-
     winrt::Windows::Data::Xml::Dom::IXmlNode hostRuntimePublisher = manifestDocElement.CreateAttribute(L"Publisher");
     hostRuntimePublisher.InnerText(L"CN=Microsoft Windows, O=Microsoft Corporation, L=Redmond, S=Washington, C=US");
     hostRuntimeDepNode.Attributes().SetNamedItem(hostRuntimePublisher);
-
     winrt::Windows::Data::Xml::Dom::IXmlNode hostRuntimeVersion = manifestDocElement.CreateAttribute(L"MinVersion");
     hostRuntimeVersion.InnerText(L"1.0.0.0");
     hostRuntimeDepNode.Attributes().SetNamedItem(hostRuntimeVersion);
-
     dependencyNode.AppendChild(hostRuntimeDepNode);
 
+    // Remove <Package> child elements that aren't needed.
     std::set<std::wstring> allowedChildren = GetAllowedChildren();
-
     for (auto child : packageNode.ChildNodes())
     {
         if (child.NodeType() == winrt::Windows::Data::Xml::Dom::NodeType::ElementNode)
@@ -434,6 +451,7 @@ HRESULT ModifyManifest(
         }
     }
 
+    // Calculate PackageFamilyName for arguments.
     std::wstring packageName = L"";
     RETURN_IF_FAILED(FindNodeTextValue(manifestDocElement, packageIdentityNameQuery, true, packageName));
 
@@ -453,6 +471,7 @@ HRESULT ModifyManifest(
     std::wstring aumidPrefix{ packageFamilyName };
     aumidPrefix += L"!";
 
+    // Fix application entries to use HostRuntime
     winrt::Windows::Data::Xml::Dom::XmlNodeList applicationNodes = manifestDocElement.SelectNodes(manifestApplicationQuery.c_str());
     for (winrt::Windows::Data::Xml::Dom::IXmlNode applicationNode : applicationNodes)
     {
@@ -480,15 +499,17 @@ HRESULT ModifyManifest(
         parametersText += aumidPrefix + idNode.InnerText();
         parametersNode.InnerText(parametersText);
         applicationNode.Attributes().SetNamedItem(parametersNode);
-
-
     }
 
+    // Write manifest
     using namespace winrt::Windows::Storage;
     StorageFolder storageFolder{ StorageFolder::GetFolderFromPathAsync(kozaniManifestOutputDirPath).get() };
     auto outputManifestFile{ storageFolder.CreateFileAsync(manifestFileName, CreationCollisionOption::ReplaceExisting).get() };
-
     manifestDocElement.SaveToFileAsync(outputManifestFile).get();
+
+    StorageFolder storageFolder2{ StorageFolder::GetFolderFromPathAsync(L"D:\\vm").get()};
+    auto outputManifestFile2{ storageFolder2.CreateFileAsync(manifestFileName, CreationCollisionOption::ReplaceExisting).get() };
+    manifestDocElement.SaveToFileAsync(outputManifestFile2).get();
     return S_OK;
 }
 
