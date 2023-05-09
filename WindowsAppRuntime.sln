@@ -197,6 +197,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Windows.Applicati
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Windows.AppLifecycle.Projection", "dev\Projections\CS\Microsoft.Windows.AppLifecycle\Microsoft.Windows.AppLifecycle.Projection.csproj", "{D417EDBE-D783-484F-83F3-710DEC7CB585}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Kozani.MakeMSIX.Projection", "dev\Projections\CS\Microsoft.Windows.AppLifecycle\Microsoft.Kozani.MakeMSIX.Projection.csproj", "{106C4926-77B3-437B-B0DC-FF01C7F3A7E9}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WindowsAppRuntime.Test.Singleton.Msix", "test\DynamicDependency\data\WindowsAppRuntime.Test.Singleton.Msix\WindowsAppRuntime.Test.Singleton.Msix.vcxproj", "{8F2C21F1-47AB-428C-A110-EE33FD7D9493}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DeploymentTests", "test\Deployment\API\DeploymentTests.vcxproj", "{E5659A29-FE68-417B-9BC5-613073DD54DF}"
@@ -619,6 +621,10 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KozaniProtocol", "dev\Kozani\KozaniProtocol\KozaniProtocol.vcxproj", "{3F28C3ED-2548-4530-8B6C-832FAE0E993D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Microsoft.Kozani.MakeMSIX", "dev\Kozani\Microsoft.Kozani.MakeMSIX\Microsoft.Kozani.MakeMSIX.vcxproj", "{A732DE46-BE79-42E5-AC00-116D1B6A50A3}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Microsoft.Kozani.MakeMSIXConsole", "test\Kozani\Microsoft.Kozani.MakeMSIXConsole\Microsoft.Kozani.MakeMSIXConsole.vcxproj", "{149978DD-105E-40E0-B081-F2BCD50F99DB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Kozani.MakeMSIX.Projection", "dev\Projections\CS\Microsoft.Kozani.MakeMSIX.Projection\Microsoft.Kozani.MakeMSIX.Projection.csproj", "{E7C781E2-DE0D-4F95-B0C6-2340AF9D80E8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -2199,6 +2205,38 @@ Global
 		{A732DE46-BE79-42E5-AC00-116D1B6A50A3}.Release|x64.Build.0 = Release|x64
 		{A732DE46-BE79-42E5-AC00-116D1B6A50A3}.Release|x86.ActiveCfg = Release|Win32
 		{A732DE46-BE79-42E5-AC00-116D1B6A50A3}.Release|x86.Build.0 = Release|Win32
+		{149978DD-105E-40E0-B081-F2BCD50F99DB}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{149978DD-105E-40E0-B081-F2BCD50F99DB}.Debug|Any CPU.Build.0 = Debug|x64
+		{149978DD-105E-40E0-B081-F2BCD50F99DB}.Debug|ARM64.ActiveCfg = Debug|x64
+		{149978DD-105E-40E0-B081-F2BCD50F99DB}.Debug|ARM64.Build.0 = Debug|x64
+		{149978DD-105E-40E0-B081-F2BCD50F99DB}.Debug|x64.ActiveCfg = Debug|x64
+		{149978DD-105E-40E0-B081-F2BCD50F99DB}.Debug|x64.Build.0 = Debug|x64
+		{149978DD-105E-40E0-B081-F2BCD50F99DB}.Debug|x86.ActiveCfg = Debug|Win32
+		{149978DD-105E-40E0-B081-F2BCD50F99DB}.Debug|x86.Build.0 = Debug|Win32
+		{149978DD-105E-40E0-B081-F2BCD50F99DB}.Release|Any CPU.ActiveCfg = Release|x64
+		{149978DD-105E-40E0-B081-F2BCD50F99DB}.Release|Any CPU.Build.0 = Release|x64
+		{149978DD-105E-40E0-B081-F2BCD50F99DB}.Release|ARM64.ActiveCfg = Release|x64
+		{149978DD-105E-40E0-B081-F2BCD50F99DB}.Release|ARM64.Build.0 = Release|x64
+		{149978DD-105E-40E0-B081-F2BCD50F99DB}.Release|x64.ActiveCfg = Release|x64
+		{149978DD-105E-40E0-B081-F2BCD50F99DB}.Release|x64.Build.0 = Release|x64
+		{149978DD-105E-40E0-B081-F2BCD50F99DB}.Release|x86.ActiveCfg = Release|Win32
+		{149978DD-105E-40E0-B081-F2BCD50F99DB}.Release|x86.Build.0 = Release|Win32
+		{E7C781E2-DE0D-4F95-B0C6-2340AF9D80E8}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{E7C781E2-DE0D-4F95-B0C6-2340AF9D80E8}.Debug|Any CPU.Build.0 = Debug|x64
+		{E7C781E2-DE0D-4F95-B0C6-2340AF9D80E8}.Debug|ARM64.ActiveCfg = Debug|arm64
+		{E7C781E2-DE0D-4F95-B0C6-2340AF9D80E8}.Debug|ARM64.Build.0 = Debug|arm64
+		{E7C781E2-DE0D-4F95-B0C6-2340AF9D80E8}.Debug|x64.ActiveCfg = Debug|x64
+		{E7C781E2-DE0D-4F95-B0C6-2340AF9D80E8}.Debug|x64.Build.0 = Debug|x64
+		{E7C781E2-DE0D-4F95-B0C6-2340AF9D80E8}.Debug|x86.ActiveCfg = Debug|x86
+		{E7C781E2-DE0D-4F95-B0C6-2340AF9D80E8}.Debug|x86.Build.0 = Debug|x86
+		{E7C781E2-DE0D-4F95-B0C6-2340AF9D80E8}.Release|Any CPU.ActiveCfg = Release|x64
+		{E7C781E2-DE0D-4F95-B0C6-2340AF9D80E8}.Release|Any CPU.Build.0 = Release|x64
+		{E7C781E2-DE0D-4F95-B0C6-2340AF9D80E8}.Release|ARM64.ActiveCfg = Release|arm64
+		{E7C781E2-DE0D-4F95-B0C6-2340AF9D80E8}.Release|ARM64.Build.0 = Release|arm64
+		{E7C781E2-DE0D-4F95-B0C6-2340AF9D80E8}.Release|x64.ActiveCfg = Release|x64
+		{E7C781E2-DE0D-4F95-B0C6-2340AF9D80E8}.Release|x64.Build.0 = Release|x64
+		{E7C781E2-DE0D-4F95-B0C6-2340AF9D80E8}.Release|x86.ActiveCfg = Release|x86
+		{E7C781E2-DE0D-4F95-B0C6-2340AF9D80E8}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -2387,6 +2425,8 @@ Global
 		{82197F64-3A88-4C48-AEF9-7E62E71D75BB} = {84F66485-4391-41C7-89CB-D5006EDF1383}
 		{3F28C3ED-2548-4530-8B6C-832FAE0E993D} = {82197F64-3A88-4C48-AEF9-7E62E71D75BB}
 		{A732DE46-BE79-42E5-AC00-116D1B6A50A3} = {443FCCC6-F263-4177-ACC3-2125D400F5D6}
+		{149978DD-105E-40E0-B081-F2BCD50F99DB} = {AC5FFC80-92FE-4933-BED2-EC5519AC4440}
+		{E7C781E2-DE0D-4F95-B0C6-2340AF9D80E8} = {716C26A0-E6B0-4981-8412-D14A4D410531}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {4B3D7591-CFEC-4762-9A07-ABE99938FB77}

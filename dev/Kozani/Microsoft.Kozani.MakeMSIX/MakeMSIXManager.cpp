@@ -302,7 +302,7 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
 
         std::filesystem::path packagePath{ packageFilePathToConvert.c_str()};
         std::wstring packagePathExtension{ packagePath.extension() };
-        std::transform(packagePathExtension.begin(), packagePathExtension.end(), packagePathExtension.begin(), tolower);
+        std::transform(packagePathExtension.begin(), packagePathExtension.end(), packagePathExtension.begin(), towlower);
         if (packagePathExtension.ends_with(L".msixbundle") ||
             packagePathExtension.ends_with(L".appxbundle"))
         {
@@ -320,7 +320,7 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
             for (const auto& file : std::filesystem::directory_iterator(tempUnbundleDirectory))
             {
                 std::wstring fileExtension{ file.path().extension() };
-                std::transform(fileExtension.begin(), fileExtension.end(), fileExtension.begin(), tolower);
+                std::transform(fileExtension.begin(), fileExtension.end(), fileExtension.begin(), towlower);
                 if ((fileExtension.compare(L".appx") != 0) &&
                     (fileExtension.compare(L".msix") != 0))
                 {

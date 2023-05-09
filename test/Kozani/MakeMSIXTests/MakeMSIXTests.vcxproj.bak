@@ -150,6 +150,7 @@
     <Copy SourceFiles="$(OutDir)\..\Microsoft.Kozani.MakeMSIX\Microsoft.Kozani.MakeMSIX.dll" DestinationFolder="$(OutDir)" />
     <Copy SourceFiles="$(OutDir)\..\Microsoft.Kozani.MakeMSIX\Microsoft.Kozani.MakeMSIX.pdb" DestinationFolder="$(OutDir)" />
     <Copy SourceFiles="$(WindowsSdkDir)\bin\$(TargetPlatformVersion)\$(PlatformShortName)\MrmSupport.dll" DestinationFolder="$(OutDir)" />
+
   </Target>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
