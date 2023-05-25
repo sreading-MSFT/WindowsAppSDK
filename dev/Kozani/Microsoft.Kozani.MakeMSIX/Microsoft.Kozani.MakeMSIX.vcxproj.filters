@@ -54,6 +54,9 @@
     <ClInclude Include="CreateMountableImageOptions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ContentType.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -93,6 +96,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CreateMountableImageOptions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ContentType.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -50,15 +50,27 @@ namespace Microsoft.Kozani.MakeMSIX
 
         /// <summary>
         /// Optional replacement package publisher.
-        /// If not set, publisher from appxmanifest.xml is unchaged.
+        /// If not set, publisher from AppxManifest.xml is unchanged.
         /// </summary>
         String PackagePublisher{ get; set; };
 
         /// <summary>
         /// Optional replacement package name.
-        /// If not set, name from appxmanifest.xml is unchaged.
+        /// If not set, name from AppxManifest.xml is unchanged.
         /// </summary>
         String PackageName{ get; set; };
+
+        /// <summary>
+        /// Optional replacement package version.
+        /// If not set, version from AppxManifest.xml is unchanged.
+        /// </summary>
+        Windows.ApplicationModel.PackageVersion PackageVersion{ get; set; };
+
+        /// <summary>
+        /// Remove File Type Associations and Protocol Extensions.
+        /// Defaults to false.
+        /// </summary>
+        Boolean RemoveExtensions{ get; set; };
 
         /// <summary>
         /// Overwrite PackageFilePath if it already exists.

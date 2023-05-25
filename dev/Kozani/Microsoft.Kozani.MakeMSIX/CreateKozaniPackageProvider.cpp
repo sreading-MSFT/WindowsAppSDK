@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation and Contributors.
+// Licensed under the MIT License.
+
 #include "pch.h"
 #include "Constants.hpp"
 #include "CreateKozaniPackageProvider.hpp"
@@ -507,9 +510,6 @@ HRESULT ModifyManifest(
     auto outputManifestFile{ storageFolder.CreateFileAsync(manifestFileName, CreationCollisionOption::ReplaceExisting).get() };
     manifestDocElement.SaveToFileAsync(outputManifestFile).get();
 
-    StorageFolder storageFolder2{ StorageFolder::GetFolderFromPathAsync(L"D:\\vm").get()};
-    auto outputManifestFile2{ storageFolder2.CreateFileAsync(manifestFileName, CreationCollisionOption::ReplaceExisting).get() };
-    manifestDocElement.SaveToFileAsync(outputManifestFile2).get();
     return S_OK;
 }
 

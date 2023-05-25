@@ -6,190 +6,15 @@
 #include "MakeMSIXManager.g.cpp"
 #include "CreateKozaniPackageProvider.hpp"
 #include <filesystem>
+#include <winrt/windows.storage.h>
+#include <winrt/windows.storage.streams.h>
+#include <msopc.h>
+#include <AppxPackaging.h>
+#include "ContentType.hpp"
+#include "Constants.hpp"
 
 namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
 {
-    /// <summary>
-    /// Create a process and synchronously wait for it to exit.
-    /// </summary>
-    /// <param name="commandLine">CommandLine argument for CreateProcess</param>
-    /// <param name="exitCode">Exit code of the process</param>
-    /// <returns>Success if process is created and exit code is returned.</returns>
-    HRESULT CreateProcessAndWaitForExitCode(std::wstring commandLine, DWORD& exitCode)
-    {
-        STARTUPINFO startupInfo;
-        ZeroMemory(&startupInfo, sizeof(startupInfo));
-        startupInfo.cb = sizeof(startupInfo);
-
-        PROCESS_INFORMATION processInformation;
-        ZeroMemory(&processInformation, sizeof(processInformation));
-
-        if (!CreateProcess(
-            nullptr,
-            const_cast<LPWSTR>(commandLine.c_str()),
-            nullptr,
-            nullptr,
-            FALSE,
-            0,
-            nullptr,
-            nullptr,
-            &startupInfo,
-            &processInformation
-        ))
-        {
-            return HRESULT_FROM_WIN32(GetLastError());
-        }
-
-        DWORD waitResult = WaitForSingleObject(processInformation.hProcess, INFINITE);
-        switch (waitResult)
-        {
-        case WAIT_OBJECT_0:
-            break;
-        case WAIT_FAILED:
-            return HRESULT_FROM_WIN32(GetLastError());
-        case WAIT_ABANDONED:
-        case WAIT_TIMEOUT:
-        default:
-            return E_UNEXPECTED;
-        }
-        if (!GetExitCodeProcess(processInformation.hProcess, &exitCode))
-        {
-            return HRESULT_FROM_WIN32(GetLastError());
-        }
-
-        return S_OK;
-    }
-
-    HRESULT LaunchMakeAppxWithArguments(std::list<std::wstring>& arguments)
-    {
-        wil::unique_hkey hKey;
-        std::wstring sdkRegPath{ LR"(SOFTWARE\WOW6432Node\Microsoft\Microsoft SDKs\Windows\v10.0)" };
-        RETURN_IF_FAILED(RegOpenKeyEx(HKEY_LOCAL_MACHINE, sdkRegPath.c_str(), 0, KEY_READ, &hKey));
-
-        std::wstring installPathKeyName{ L"InstallationFolder"};
-        WCHAR installPathBuffer[MAX_PATH];
-        DWORD installPathBufferLength = sizeof(installPathBuffer);
-        RETURN_IF_FAILED(RegGetValueW(
-            hKey.get(),
-            nullptr,
-            installPathKeyName.c_str(),
-            RRF_RT_REG_SZ,
-            nullptr /* pdwType */,
-            &installPathBuffer,
-            &installPathBufferLength));
-        std::wstring installPathString{ installPathBuffer };
-
-        std::wstring productVersionKeyName{ L"ProductVersion" };
-        WCHAR productVersionBuffer[MAX_PATH];
-        DWORD productVersionBufferLength = sizeof(productVersionBuffer);
-        RETURN_IF_FAILED(RegGetValueW(
-            hKey.get(),
-            nullptr,
-            productVersionKeyName.c_str(),
-            RRF_RT_REG_SZ,
-            nullptr /* pdwType */,
-            &productVersionBuffer,
-            &productVersionBufferLength));
-        std::wstring productVersionString{ productVersionBuffer };
-            
-        std::filesystem::path makeAppxPath{ installPathString };
-        makeAppxPath /= L"bin";
-        makeAppxPath /= productVersionString + L".0"; //TODO: Only add last digit to version string when necessary
-        makeAppxPath /= L"x64"; //TODO: lookup architecture
-        makeAppxPath /= L"makeappx.exe";
-        std::wstring commandLine{ makeAppxPath };
-        for (std::wstring argument : arguments)
-        {
-            commandLine += L" " + argument;
-        }
-        DWORD exitCode{};
-        RETURN_IF_FAILED(CreateProcessAndWaitForExitCode(commandLine, exitCode));
-        if (exitCode == EXIT_FAILURE)
-        {
-            return E_FAIL;
-        }
-        return S_OK;
-    }
-
-    std::list<std::wstring> GetCommandLineArgumentsForMakeAppxPack(std::wstring directoryToPack, PackOptions packOptions)
-    {
-        std::list<std::wstring> arguments;
-        arguments.push_back(L"pack");
-        arguments.push_back(L"/d");
-        arguments.push_back(directoryToPack);
-        arguments.push_back(L"/p");
-        arguments.push_back(packOptions.PackageFilePath().c_str());
-        if (packOptions.OverwriteFiles())
-        {
-            arguments.push_back(L"/o");
-        }
-        else
-        {
-            arguments.push_back(L"/no");
-        }
-        if (!packOptions.ValidateFiles())
-        {
-            arguments.push_back(L"/nv");
-            arguments.push_back(L"/nfv");
-        }
-        return arguments;
-    }
-    std::list<std::wstring> GetCommandLineArgumentsForMakeAppxUnpack(std::wstring packageToUnpack, UnpackOptions unpackOptions)
-    {
-        std::list<std::wstring> arguments;
-        arguments.push_back(L"unpack");
-        arguments.push_back(L"/p");
-        arguments.push_back(packageToUnpack);
-        arguments.push_back(L"/d");
-        arguments.push_back(unpackOptions.UnpackedPackageRootDirectory().c_str());
-        if (unpackOptions.OverwriteFiles())
-        {
-            arguments.push_back(L"/o");
-        }
-        else
-        {
-            arguments.push_back(L"/no");
-        }
-        return arguments;
-    }
-    std::list<std::wstring> GetCommandLineArgumentsForMakeAppxUnbundle(std::wstring packageToUnbundle, UnbundleOptions unbundleOptions)
-    {
-        std::list<std::wstring> arguments;
-        arguments.push_back(L"unbundle");
-        arguments.push_back(L"/p");
-        arguments.push_back(packageToUnbundle);
-        arguments.push_back(L"/d");
-        arguments.push_back(unbundleOptions.UnbundledPackageRootDirectory().c_str());
-        if (unbundleOptions.OverwriteFiles())
-        {
-            arguments.push_back(L"/o");
-        }
-        else
-        {
-            arguments.push_back(L"/no");
-        }
-        return arguments;
-    }
-    std::list<std::wstring> GetCommandLineArgumentsForMakeAppxBundle(std::wstring directoryToBundle, BundleOptions bundleOptions)
-    {
-        std::list<std::wstring> arguments;
-        arguments.push_back(L"bundle");
-        arguments.push_back(L"/d");
-        arguments.push_back(directoryToBundle);
-        arguments.push_back(L"/p");
-        arguments.push_back(bundleOptions.BundleFilePath().c_str());
-        if (bundleOptions.OverwriteFiles())
-        {
-            arguments.push_back(L"/o");
-        }
-        else
-        {
-            arguments.push_back(L"/no");
-        }
-        return arguments;
-    }
-
-
     HRESULT ValidateCreatePackageArguments(hstring directoryPathToPack, PackOptions packOptions)
     {
         if (!std::filesystem::is_directory(directoryPathToPack.c_str()))
@@ -234,6 +59,93 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
         return S_OK;
     }
 
+    UINT64 ConvertToQuadVersion(Windows::ApplicationModel::PackageVersion packageVersion)
+    {
+        // a dot-quad version such as 4.2.5.6 is represented as a 64-bit little endian number as
+        //   0006 0005 0002 0004 
+        // with the least significant 16-bit word first.
+        uint64_t quadVersion = ((uint64_t)packageVersion.Revision << 48) +
+            ((uint64_t)packageVersion.Build << 32) +
+            ((uint32_t)packageVersion.Minor << 16) +
+            ((uint32_t)packageVersion.Major << 0);
+
+        return quadVersion;
+    }
+
+    HRESULT GetFileStream(
+        _In_ PCWSTR filePath,
+        _In_ OPC_STREAM_IO_MODE ioMode,
+        _Outptr_ IStream** fileStream)
+    {
+        winrt::com_ptr<IOpcFactory> opcFactory;
+        winrt::check_hresult(CoCreateInstance(__uuidof(OpcFactory), NULL, CLSCTX_INPROC_SERVER, __uuidof(opcFactory), opcFactory.put_void()));
+        winrt::check_hresult(opcFactory->CreateStreamOnFile(filePath, ioMode, NULL, FILE_ATTRIBUTE_NORMAL, fileStream));
+        return S_OK;
+    }
+
+    Windows::Foundation::IAsyncAction ExtractFileToDirectory(IAppxFile* appxFile, Windows::Storage::StorageFolder unpackDestinationFolder)
+    {
+        winrt::com_ptr<IStream> fileStream;
+        winrt::check_hresult(appxFile->GetStream(fileStream.put()));
+
+        wil::unique_cotaskmem_string appxFileName;
+        winrt::check_hresult(appxFile->GetName(&appxFileName));
+
+        auto outputFile{ unpackDestinationFolder.CreateFileAsync(static_cast<std::wstring>(appxFileName.get()), Windows::Storage::CreationCollisionOption::ReplaceExisting).get() };
+        Windows::Storage::Streams::IRandomAccessStream outputFileRandomStream{ co_await outputFile.OpenAsync(Windows::Storage::FileAccessMode::ReadWrite) };
+        Windows::Storage::Streams::IOutputStream outputStream{ outputFileRandomStream.GetOutputStreamAt(0) };
+        Windows::Storage::Streams::DataWriter dataWriter{ outputStream };
+
+        LARGE_INTEGER start = { 0 };
+        ULARGE_INTEGER end = { 0 };
+        winrt::check_hresult(fileStream->Seek(start, STREAM_SEEK_END, &end));
+        winrt::check_hresult(fileStream->Seek(start, STREAM_SEEK_SET, nullptr));
+        std::uint64_t uncompressedSize = static_cast<std::uint64_t>(end.QuadPart);
+
+        std::uint64_t bytesToRead = uncompressedSize;
+        while (bytesToRead > 0)
+        {
+            // Calculate the size of the next block to add
+            std::uint32_t blockSize = (bytesToRead > DefaultBlockSize) ? DefaultBlockSize : static_cast<std::uint32_t>(bytesToRead);
+            bytesToRead -= blockSize;
+
+            // read block from stream
+            std::vector<std::uint8_t> block;
+            block.resize(blockSize);
+            ULONG bytesRead;
+            winrt::check_hresult(fileStream->Read(static_cast<void*>(block.data()), static_cast<ULONG>(blockSize), &bytesRead));
+            winrt::check_bool((static_cast<ULONG>(blockSize) == bytesRead));
+
+            dataWriter.WriteBytes(block);
+            unsigned int bytesStored{ dataWriter.StoreAsync().get() };
+            winrt::check_bool(bytesStored == bytesRead);
+        }
+
+        winrt::check_bool(dataWriter.FlushAsync().get());
+        dataWriter.Close();
+        outputStream.Close();
+        outputFileRandomStream.Close();
+
+        co_return;
+    }
+
+    Windows::Foundation::IAsyncAction ExtractFilesToDirectory(IAppxFilesEnumerator* appxFilesEnumerator, Windows::Storage::StorageFolder unpackDestinationFolder)
+    {
+        BOOL hasCurrent = FALSE;
+        winrt::check_hresult(appxFilesEnumerator->GetHasCurrent(&hasCurrent));
+        while (hasCurrent)
+        {
+            winrt::com_ptr<IAppxFile> appxFile;
+            winrt::check_hresult(appxFilesEnumerator->GetCurrent(appxFile.put()));
+
+            ExtractFileToDirectory(appxFile.get(), unpackDestinationFolder).get();
+            
+            winrt::check_hresult(appxFilesEnumerator->MoveNext(&hasCurrent));
+        }
+
+        co_return;
+    }
+
     Windows::Foundation::IAsyncAction MakeMSIXManager::Pack(hstring directoryPathToPack, PackOptions packOptions)
     {
         winrt::check_hresult(ValidateCreatePackageArguments(directoryPathToPack, packOptions));
@@ -241,8 +153,46 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
         // Package creation is expected to be slow.
         co_await winrt::resume_background();
 
-        std::list<std::wstring> arguments = GetCommandLineArgumentsForMakeAppxPack(directoryPathToPack.c_str(), packOptions);
-        winrt::check_hresult(LaunchMakeAppxWithArguments(arguments));
+        APPX_PACKAGE_SETTINGS settings{};
+        winrt::com_ptr<IUri> hashMethodUri;
+        const LPCWSTR sha256AlgorithmUri = L"http://www.w3.org/2001/04/xmlenc#sha256";
+        winrt::check_hresult(CreateUri(sha256AlgorithmUri, Uri_CREATE_CANONICALIZE, NULL, hashMethodUri.put()));
+        settings.forceZip32 = FALSE;
+        settings.hashMethod = hashMethodUri.get();
+
+        winrt::com_ptr<IStream> packageStream;
+        winrt::check_hresult(GetFileStream(packOptions.PackageFilePath().c_str(), OPC_STREAM_IO_WRITE, packageStream.put()));
+
+        winrt::com_ptr<IAppxFactory> appxFactory;
+        winrt::check_hresult(CoCreateInstance(__uuidof(AppxFactory), NULL, CLSCTX_INPROC_SERVER, __uuidof(appxFactory), appxFactory.put_void()));
+
+        winrt::com_ptr<IAppxPackageWriter> packageWriter;
+        winrt::check_hresult(appxFactory->CreatePackageWriter(packageStream.get(), &settings, packageWriter.put()));
+
+        for (const auto& file : std::filesystem::directory_iterator(directoryPathToPack.c_str()))
+        {
+            std::wstring fileName = file.path().filename();
+            std::transform(fileName.begin(), fileName.end(), fileName.begin(), towlower);
+            if ((fileName == L"appxmanifest.xml") ||
+                (fileName == L"appxblockmap.xml") ||
+                (fileName == L"appxsignature.p7x"))
+            {
+                continue;
+            }
+            std::wstring fileExtension = file.path().extension();
+            auto contentType = MSIX::ContentType::GetContentTypeByExtension(fileExtension);
+
+            winrt::com_ptr<IStream> fileStream;
+            winrt::check_hresult(GetFileStream(file.path().c_str(), OPC_STREAM_IO_READ, fileStream.put()));
+
+            winrt::check_hresult(packageWriter->AddPayloadFile(file.path().filename().c_str(), contentType.GetContentType().c_str(), contentType.GetCompressionOpt(), fileStream.get()));
+        }
+
+        std::filesystem::path manifestFilePath{ directoryPathToPack.c_str()};
+        manifestFilePath /= manifestFileName;
+        winrt::com_ptr<IStream> manifestStream;
+        winrt::check_hresult(GetFileStream(manifestFilePath.c_str(), OPC_STREAM_IO_READ, manifestStream.put()));
+        winrt::check_hresult(packageWriter->Close(manifestStream.get()));
 
         co_return;
     }
@@ -251,26 +201,100 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
     {
         co_await winrt::resume_background();
 
-        std::list<std::wstring> arguments = GetCommandLineArgumentsForMakeAppxUnpack(packageFilePathToUnpack.c_str(), unpackOptions);
-        winrt::check_hresult(LaunchMakeAppxWithArguments(arguments));
+        Windows::Storage::StorageFolder unpackDestinationFolder{ Windows::Storage::StorageFolder::GetFolderFromPathAsync(unpackOptions.UnpackedPackageRootDirectory()).get() };
+
+        winrt::com_ptr<IStream> packageStream;
+        winrt::check_hresult(GetFileStream(packageFilePathToUnpack.c_str(), OPC_STREAM_IO_READ, packageStream.put()));
+
+        winrt::com_ptr<IAppxFactory> appxFactory;
+        winrt::check_hresult(CoCreateInstance(__uuidof(AppxFactory), NULL, CLSCTX_INPROC_SERVER, __uuidof(appxFactory), appxFactory.put_void()));
+
+        winrt::com_ptr<IAppxPackageReader> packageReader;
+        winrt::check_hresult(appxFactory->CreatePackageReader(packageStream.get(), packageReader.put()));
+
+        winrt::com_ptr<IAppxFilesEnumerator> appxFilesEnumerator;
+        winrt::check_hresult(packageReader->GetPayloadFiles(appxFilesEnumerator.put()));
+
+        ExtractFilesToDirectory(appxFilesEnumerator.get(), unpackDestinationFolder).get();
+
+        for (UINT32 footprintType = APPX_FOOTPRINT_FILE_TYPE_MANIFEST; footprintType <= APPX_FOOTPRINT_FILE_TYPE_CONTENTGROUPMAP; footprintType++)
+        {
+            winrt::com_ptr<IAppxFile> appxFile;
+            HRESULT hrGetFile = packageReader->GetFootprintFile(static_cast<APPX_FOOTPRINT_FILE_TYPE>(footprintType), appxFile.put());
+            if (hrGetFile != HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
+            {
+                winrt::check_hresult(hrGetFile);
+                ExtractFileToDirectory(appxFile.get(), unpackDestinationFolder).get();
+            }
+        }
+
+        co_return;
     }
 
     Windows::Foundation::IAsyncAction MakeMSIXManager::Bundle(hstring directoryPathToBundle, BundleOptions bundleOptions)
     {
         co_await winrt::resume_background();
 
-        std::list<std::wstring> arguments = GetCommandLineArgumentsForMakeAppxBundle(directoryPathToBundle.c_str(), bundleOptions);
-        winrt::check_hresult(LaunchMakeAppxWithArguments(arguments));
+        winrt::com_ptr<IAppxBundleFactory> appxBundleFactory;
+        winrt::check_hresult(CoCreateInstance(__uuidof(AppxBundleFactory), NULL, CLSCTX_INPROC_SERVER, __uuidof(appxBundleFactory), appxBundleFactory.put_void()));
+
+        winrt::com_ptr<IStream> bundleStream;
+        winrt::check_hresult(GetFileStream(bundleOptions.BundleFilePath().c_str(), OPC_STREAM_IO_WRITE, bundleStream.put()));
+
+        winrt::com_ptr<IAppxBundleWriter> bundleWriter;
+        winrt::check_hresult(appxBundleFactory->CreateBundleWriter(bundleStream.get(), ConvertToQuadVersion(bundleOptions.BundleVersion()), bundleWriter.put()));
+
+        for (const auto& file : std::filesystem::directory_iterator(directoryPathToBundle.c_str()))
+        {
+            std::wstring fileExtension = file.path().extension();
+            std::transform(fileExtension.begin(), fileExtension.end(), fileExtension.begin(), towlower);
+            if ((fileExtension != L".appx") &&
+                (fileExtension != L".msix"))
+            {
+                continue;
+            }
+
+            winrt::com_ptr<IStream> fileStream;
+            winrt::check_hresult(GetFileStream(file.path().c_str(), OPC_STREAM_IO_READ, fileStream.put()));
+
+            winrt::check_hresult(bundleWriter->AddPayloadPackage(file.path().filename().c_str(), fileStream.get()));
+        }
+
+        winrt::check_hresult(bundleWriter->Close());
     }
 
     Windows::Foundation::IAsyncAction MakeMSIXManager::Unbundle(hstring bundleFilePathToUnbundle, UnbundleOptions unbundleOptions)
     {
         co_await winrt::resume_background();
 
-        std::list<std::wstring> arguments = GetCommandLineArgumentsForMakeAppxUnbundle(bundleFilePathToUnbundle.c_str(), unbundleOptions);
-        winrt::check_hresult(LaunchMakeAppxWithArguments(arguments));
-    }
+        Windows::Storage::StorageFolder unpackDestinationFolder{ Windows::Storage::StorageFolder::GetFolderFromPathAsync(unbundleOptions.UnbundledPackageRootDirectory()).get() };
 
+        winrt::com_ptr<IStream> packageStream;
+        winrt::check_hresult(GetFileStream(bundleFilePathToUnbundle.c_str(), OPC_STREAM_IO_READ, packageStream.put()));
+
+        winrt::com_ptr<IAppxBundleFactory> appxBundleFactory;
+        winrt::check_hresult(CoCreateInstance(__uuidof(AppxBundleFactory), NULL, CLSCTX_INPROC_SERVER, __uuidof(appxBundleFactory), appxBundleFactory.put_void()));
+
+        winrt::com_ptr<IAppxBundleReader> bundleReader;
+        winrt::check_hresult(appxBundleFactory->CreateBundleReader(packageStream.get(), bundleReader.put()));
+
+        winrt::com_ptr<IAppxFilesEnumerator> appxFilesEnumerator;
+        winrt::check_hresult(bundleReader->GetPayloadPackages(appxFilesEnumerator.put()));
+
+        ExtractFilesToDirectory(appxFilesEnumerator.get(), unpackDestinationFolder).get();
+
+        for (UINT32 footprintType = APPX_BUNDLE_FOOTPRINT_FILE_TYPE_FIRST; footprintType <= APPX_BUNDLE_FOOTPRINT_FILE_TYPE_LAST; footprintType++)
+        {
+            winrt::com_ptr<IAppxFile> appxFile;
+            HRESULT hrGetFile = bundleReader->GetFootprintFile(static_cast<APPX_BUNDLE_FOOTPRINT_FILE_TYPE>(footprintType), appxFile.put());
+
+            if (hrGetFile != HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
+            {
+                winrt::check_hresult(hrGetFile);
+                ExtractFileToDirectory(appxFile.get(), unpackDestinationFolder).get();
+            }
+        }
+    }
 
     Windows::Foundation::IAsyncAction CreateKozaniPackageFromPackage(hstring packageFilePathToConvert,
             CreateKozaniPackageOptions createKozaniPackageOptions)
@@ -283,14 +307,15 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
         co_await MakeMSIXManager::Unpack(packageFilePathToConvert, unpackOptions);
 
         std::wstring tempKozaniLayoutDirectory{};
-        CreateTempDirectory(tempKozaniLayoutDirectory);
+        winrt::check_hresult(CreateTempDirectory(tempKozaniLayoutDirectory));
         winrt::check_hresult(CreateKozaniPackageLayout(tempFullPackageUnpackDirectory, tempKozaniLayoutDirectory));
 
         PackOptions packOptions = PackOptions();
         packOptions.OverwriteFiles(true);
         packOptions.PackageFilePath(createKozaniPackageOptions.PackageFilePath().c_str());
-        std::list<std::wstring> arguments = GetCommandLineArgumentsForMakeAppxPack(tempKozaniLayoutDirectory, packOptions);
-        winrt::check_hresult(LaunchMakeAppxWithArguments(arguments));
+
+        co_await MakeMSIXManager::Pack(tempKozaniLayoutDirectory.c_str(), packOptions);
+
         co_return;
     }
 

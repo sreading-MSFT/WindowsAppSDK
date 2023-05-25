@@ -16,6 +16,10 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
         void PackagePublisher(hstring);
         hstring PackageName();
         void PackageName(hstring);
+        Windows::ApplicationModel::PackageVersion PackageVersion();
+        void PackageVersion(Windows::ApplicationModel::PackageVersion);
+        bool RemoveExtensions();
+        void RemoveExtensions(bool);
         bool OverwriteFiles();
         void OverwriteFiles(bool);
         bool ValidateFiles();
@@ -24,6 +28,8 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
         hstring mPackageFilePath{};
         hstring mPackagePublisher{};
         hstring mPackageName{};
+        Windows::ApplicationModel::PackageVersion mPackageVersion{};
+        bool mRemoveExtensions{};
         bool mOverwriteFiles{};
         bool mValidateFiles{};
     };

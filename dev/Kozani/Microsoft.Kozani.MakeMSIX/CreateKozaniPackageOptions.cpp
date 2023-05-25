@@ -31,6 +31,22 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
     {
         return mPackageName;
     }
+    Windows::ApplicationModel::PackageVersion CreateKozaniPackageOptions::PackageVersion()
+    {
+        return mPackageVersion;
+    }
+    void CreateKozaniPackageOptions::PackageVersion(Windows::ApplicationModel::PackageVersion value)
+    {
+        mPackageVersion = value;
+    }
+    void CreateKozaniPackageOptions::RemoveExtensions(bool value)
+    {
+        mRemoveExtensions = value;
+    }
+    bool CreateKozaniPackageOptions::RemoveExtensions()
+    {
+        return mRemoveExtensions;
+    }
     void CreateKozaniPackageOptions::OverwriteFiles(bool value)
     {
         mOverwriteFiles = value;

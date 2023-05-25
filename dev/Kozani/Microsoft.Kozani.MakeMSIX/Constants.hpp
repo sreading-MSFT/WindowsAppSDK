@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation and Contributors.
+// Licensed under the MIT License.
+
 #pragma once
 #include <string>
 
@@ -34,3 +37,6 @@ static const std::wstring packageIdentityPublisherQuery = L"/*[local-name()='Pac
 static const std::wstring manifestDependenciesQuery = L"/*[local-name()='Package']/*[local-name()='Dependencies']";
 static const std::wstring manifestDependenciesPackageDependenciesQuery = L"*[local-name()='PackageDependency']";
 static const std::wstring manifestTargetDeviceFamilyQuery = L"*[local-name()='TargetDeviceFamily']";
+
+// Block size for reading from and writing to streams during packaging operations.
+static const std::uint32_t DefaultBlockSize = 65536;
