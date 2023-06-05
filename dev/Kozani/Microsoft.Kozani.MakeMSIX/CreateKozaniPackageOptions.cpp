@@ -7,37 +7,29 @@
 
 namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
 {
-    void CreateKozaniPackageOptions::PackageFilePath(hstring value)
+    void CreateKozaniPackageOptions::Publisher(hstring value)
     {
-        mPackageFilePath = value;
+        mPublisher = value;
     }
-    hstring CreateKozaniPackageOptions::PackageFilePath()
+    hstring CreateKozaniPackageOptions::Publisher()
     {
-        return mPackageFilePath;
+        return mPublisher;
     }
-    void CreateKozaniPackageOptions::PackagePublisher(hstring value)
+    void CreateKozaniPackageOptions::Name(hstring value)
     {
-        mPackagePublisher = value;
+        mName = value;
     }
-    hstring CreateKozaniPackageOptions::PackagePublisher()
+    hstring CreateKozaniPackageOptions::Name()
     {
-        return mPackagePublisher;
+        return mName;
     }
-    void CreateKozaniPackageOptions::PackageName(hstring value)
+    Windows::ApplicationModel::PackageVersion CreateKozaniPackageOptions::Version()
     {
-        mPackageName = value;
+        return mVersion;
     }
-    hstring CreateKozaniPackageOptions::PackageName()
+    void CreateKozaniPackageOptions::Version(Windows::ApplicationModel::PackageVersion value)
     {
-        return mPackageName;
-    }
-    Windows::ApplicationModel::PackageVersion CreateKozaniPackageOptions::PackageVersion()
-    {
-        return mPackageVersion;
-    }
-    void CreateKozaniPackageOptions::PackageVersion(Windows::ApplicationModel::PackageVersion value)
-    {
-        mPackageVersion = value;
+        mVersion = value;
     }
     void CreateKozaniPackageOptions::RemoveExtensions(bool value)
     {
@@ -47,13 +39,21 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
     {
         return mRemoveExtensions;
     }
-    void CreateKozaniPackageOptions::OverwriteFiles(bool value)
+    Windows::Foundation::Collections::IVector<hstring> CreateKozaniPackageOptions::Languages()
     {
-        mOverwriteFiles = value;
+        return mLanguages;
     }
-    bool CreateKozaniPackageOptions::OverwriteFiles()
+    Windows::Foundation::Collections::IVector<unsigned int> CreateKozaniPackageOptions::ScaleFactors()
     {
-        return mOverwriteFiles;
+        return mScaleFactors;
+    }
+    void CreateKozaniPackageOptions::OverwriteOutputFileIfExists(bool value)
+    {
+        mOverwriteOutputFileIfExists = value;
+    }
+    bool CreateKozaniPackageOptions::OverwriteOutputFileIfExists()
+    {
+        return mOverwriteOutputFileIfExists;
     }
     bool CreateKozaniPackageOptions::ValidateFiles()
     {

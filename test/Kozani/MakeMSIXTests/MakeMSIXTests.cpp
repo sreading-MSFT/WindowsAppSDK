@@ -11,6 +11,7 @@ using namespace winrt::Microsoft::Kozani::MakeMSIX;
 
 namespace TB = ::Test::Bootstrap;
 namespace TP = ::Test::Packages;
+namespace TF = ::Test::FileSystem;
 
 namespace Test::MakeMSIXTests
 {
@@ -36,12 +37,196 @@ namespace Test::MakeMSIXTests
             return true;
         }
 
+        HRESULT CreateGUIDString(std::wstring& guidString)
+        {
+            GUID newGuid;
+            THROW_IF_FAILED(CoCreateGuid(&newGuid));
+
+            wil::unique_cotaskmem_string newGuidString;
+            THROW_IF_FAILED(StringFromCLSID(newGuid, &newGuidString));
+            guidString.append(newGuidString.get());
+            return S_OK;
+        }
+
         /// <summary>
-        /// Create a process and synchronously wait for it to exit.
+        /// Create a new directory in the temp folder using a guid.
         /// </summary>
-        /// <param name="commandLine">CommandLine argument for CreateProcess</param>
-        /// <param name="exitCode">Exit code of the process</param>
-        /// <returns>Success if process is created and exit code is returned.</returns>
+        /// <param name="tempDirPathString"></param>
+        /// <returns></returns>
+        HRESULT CreateTempDirectory(_Out_ std::wstring& tempDirPathString)
+        {
+            // Create a temporary directory to unpack package(s) since we cannot unpack to the CIM directly.
+            // Append long path prefix to temporary directory path to handle paths that exceed the maximum path length limit
+            std::wstring uniqueIdString{};
+            RETURN_IF_FAILED(CreateGUIDString(uniqueIdString));
+            std::filesystem::path tempDirPath{ std::filesystem::temp_directory_path() };
+            tempDirPath /= uniqueIdString;
+
+            std::error_code createDirectoryError;
+            bool createTempDirResult = std::filesystem::create_directory(tempDirPath, createDirectoryError);
+            if (!createTempDirResult || createDirectoryError.value() != 0)
+            {
+                return E_UNEXPECTED;
+            }
+            tempDirPathString.append(tempDirPath);
+            return S_OK;
+        }
+
+        const PCWSTR c_testBundleLayoutDirectory = L"TestBundleLayout";
+        const PCWSTR c_testPackageLayoutDirectory = L"TestPackageLayout";
+        const PCWSTR c_testPackageInputFile = L"TestPackage.msix";
+        const PCWSTR c_testBundleInputFile = L"TestBundle.msixbundle";
+
+        const PCWSTR c_testBundleOutputFile = L"TestBundle.msixbundle";
+        const PCWSTR c_testPackageOutputFile = L"TestPackage.msix";
+        const PCWSTR c_testKozaniPackageOutputFile = L"TestKozaniPackage.msix";
+        TEST_METHOD(BundleTest)
+        {
+            winrt::init_apartment();
+            try
+            {
+                auto solutionOutDirPath = TF::GetSolutionOutDirPath();
+                auto msix(solutionOutDirPath);
+                msix /= c_testBundleLayoutDirectory;
+
+                std::wstring tempBundleOutputDir{};
+                winrt::check_hresult(CreateTempDirectory(tempBundleOutputDir));
+                std::filesystem::path outputBundle(tempBundleOutputDir);
+                outputBundle /= c_testBundleOutputFile;
+
+                auto createBundleOptions = CreateBundleOptions();
+                createBundleOptions.OverwriteOutputFileIfExists(true);
+                createBundleOptions.Version(winrt::Windows::ApplicationModel::PackageVersion(1, 1, 0, 0));
+
+                MakeMSIXManager::CreateBundle(solutionOutDirPath.c_str(), outputBundle.c_str(), createBundleOptions).get();
+
+                // TODO: Compare created bundle to expected bundle file.
+            }
+            catch (winrt::hresult_error const& ex)
+            {
+                OutputDebugString(ex.message().c_str());
+                winrt::check_hresult(ex.code());
+            }
+        }
+
+        TEST_METHOD(ExtractBundleTest)
+        {
+            winrt::init_apartment();
+            try
+            {
+                auto solutionOutDirPath = TF::GetSolutionOutDirPath();
+                auto bundleFileName(solutionOutDirPath);
+                bundleFileName /= c_testBundleInputFile;
+
+                std::wstring tempBundleOutputDir{};
+                winrt::check_hresult(CreateTempDirectory(tempBundleOutputDir));
+                std::filesystem::path outputBundleDir(tempBundleOutputDir);
+                outputBundleDir /= c_testBundleLayoutDirectory;
+
+                auto extractBundleOptions = ExtractBundleOptions();
+                extractBundleOptions.OverwriteOutputFilesIfExists(true);
+
+                MakeMSIXManager::ExtractBundle(bundleFileName.c_str(), outputBundleDir.c_str(), extractBundleOptions).get();
+
+                // TODO: Compare extracted bundle directory to expected bundle layout directory
+            }
+            catch (winrt::hresult_error const& ex)
+            {
+                OutputDebugString(ex.message().c_str());
+                winrt::check_hresult(ex.code());
+            }
+        }
+
+        TEST_METHOD(CreatePackageTest)
+        {
+            winrt::init_apartment();
+            try
+            {
+                auto solutionOutDirPath = TF::GetSolutionOutDirPath();
+                auto packageLayoutPath(solutionOutDirPath);
+                packageLayoutPath /= c_testPackageLayoutDirectory;
+
+                std::wstring tempDir{};
+                winrt::check_hresult(CreateTempDirectory(tempDir));
+                std::filesystem::path outputPackage(tempDir);
+                outputPackage /= c_testPackageOutputFile;
+
+                auto createPackageOptions = CreatePackageOptions();
+                createPackageOptions.OverwriteOutputFileIfExists(true);
+                createPackageOptions.Version(winrt::Windows::ApplicationModel::PackageVersion(1, 1, 0, 0));
+
+                MakeMSIXManager::CreatePackage(packageLayoutPath.c_str(), outputPackage.c_str(), createPackageOptions).get();
+
+                // TODO: Compare created package to expected package file.
+            }
+            catch (winrt::hresult_error const& ex)
+            {
+                OutputDebugString(ex.message().c_str());
+                winrt::check_hresult(ex.code());
+            }
+        }
+        TEST_METHOD(ExtractPackageTest)
+        {
+            winrt::init_apartment();
+            try
+            {
+                auto solutionOutDirPath = TF::GetTestAbsoluteFilename();
+                solutionOutDirPath = solutionOutDirPath.remove_filename();
+                auto msix(solutionOutDirPath);
+                msix /= c_testPackageInputFile;
+
+                std::wstring tempExtractPackageOutput{};
+                winrt::check_hresult(CreateTempDirectory(tempExtractPackageOutput));
+                std::filesystem::path outputPackageDir(tempExtractPackageOutput);
+                outputPackageDir /= c_testPackageLayoutDirectory;
+
+                auto extractPackageOptions = ExtractPackageOptions();
+                extractPackageOptions.OverwriteOutputFilesIfExists(true);
+
+                MakeMSIXManager::ExtractPackage(msix.c_str(), outputPackageDir.c_str(), extractPackageOptions).get();
+
+                // TODO: Compare extracted package directory to expected package layout directory
+            }
+            catch (winrt::hresult_error const& ex)
+            {
+                OutputDebugString(ex.message().c_str());
+                winrt::check_hresult(ex.code());
+            }
+        }
+        TEST_METHOD(TestCreateKozaniPackage)
+        {
+            auto solutionOutDirPath = TF::GetTestAbsoluteFilename();
+            solutionOutDirPath = solutionOutDirPath.remove_filename();
+            auto msix(solutionOutDirPath);
+            msix /= c_testPackageInputFile;
+
+            std::wstring tempDir{};
+            winrt::check_hresult(CreateTempDirectory(tempDir));
+            std::filesystem::path outputPackageFile(tempDir);
+            outputPackageFile /= c_testKozaniPackageOutputFile;
+
+            // Append "Kozani" to the package name, and trim non-english languages from the package.
+            PackageInformation packageInfo = MakeMSIXManager::GetPackageInformation(msix.c_str()).get();
+            std::wstring newPackageName{ packageInfo.Identity().Name() + L"Kozani" };
+
+            CreateKozaniPackageOptions createKozaniPackageOptions = CreateKozaniPackageOptions();
+            createKozaniPackageOptions.OverwriteOutputFileIfExists(true);
+            createKozaniPackageOptions.Name(newPackageName);
+            createKozaniPackageOptions.Languages().Append(L"en-US");
+
+            MakeMSIXManager::CreateKozaniPackage(msix.c_str(), outputPackageFile.c_str(), createKozaniPackageOptions).get();
+
+            // TODO: Compare extracted package directory to expected package layout directory
+        }
+
+        // Examples for API spec below. Can be removed.
+
+        /// <summary>
+         /// Create a process and synchronously wait for it to exit.
+         /// </summary>
+         /// <param name="commandLine">CommandLine argument for CreateProcess</param>
+         /// <param name="exitCode">Exit code of the process</param>
+         /// <returns>Success if process is created and exit code is returned.</returns>
         HRESULT CreateProcessAndWaitForExitCode(std::wstring commandLine, DWORD& exitCode)
         {
             STARTUPINFO startupInfo;
@@ -191,7 +376,7 @@ namespace Test::MakeMSIXTests
             // Initial Conditions: The build has already produced a directory that contains the exact layout of each individual package
             // that it wants to bundle.
             // Each folder has an appxmanifest.xml in the root directory.
-            
+
             // A full non-relative path to those layout folder is needed, as below.
             // Layout directories are inside this root, for example: packageLayoutRootPath\\ContosoApp1_2023.302.1739.686_x64__8wekyb3d8bbwe.
             std::wstring packageLayoutRootPath{ L"D:\\test\\ContosoApp1\\BuildOutput\\PackageLayouts" };
@@ -208,7 +393,7 @@ namespace Test::MakeMSIXTests
             std::wstring developerCertPfxFile{ L"D:\\test\\ContosoApp1\\developerCert.pfx" };
 
             // Step 1. Create the full bundle.
-
+            PackageIdentity packageIdentity = nullptr;
             // Iterate through package layout folders and pack each one.
             for (const std::filesystem::directory_entry& directoryEntry : std::filesystem::directory_iterator(packageLayoutRootPath))
             {
@@ -216,96 +401,54 @@ namespace Test::MakeMSIXTests
                 {
                     continue;
                 }
-                PackOptions packOptions = PackOptions();
-                packOptions.OverwriteFiles(true);
+
+                CreatePackageOptions createPackageOptions = CreatePackageOptions();
+                createPackageOptions.OverwriteOutputFileIfExists(true);
                 std::wstring packageFolderName = directoryEntry.path().filename().wstring();
                 std::wstring packageOutputFilePath{ packageOutputRootDirectoryPath + packageFolderName + L".appx" };
-                packOptions.PackageFilePath(packageOutputFilePath);
 
-                MakeMSIXManager::Pack(directoryEntry.path().c_str(), packOptions).get();
+                MakeMSIXManager::CreatePackage(directoryEntry.path().c_str(), packageOutputFilePath.c_str(), createPackageOptions).get();
+
+                // All packages in the bundle have the same version in this example, grab one of them to set on the bundle.
+                if (packageIdentity == nullptr)
+                {
+                    packageIdentity = MakeMSIXManager::GetPackageInformation(directoryEntry.path().c_str()).get().Identity();
+                }
             }
-            // Bundle all the packages together.
-            auto bundleOptions = BundleOptions();
-            bundleOptions.OverwriteFiles(true);
-            bundleOptions.BundleFilePath(bundleOutputFilePath);
-            bundleOptions.BundleVersion(winrt::Windows::ApplicationModel::PackageVersion(1, 1, 0, 0));
-            MakeMSIXManager::Bundle(packageOutputRootDirectoryPath, bundleOptions).get();
 
-            bundleOptions.BundleVersion(winrt::Windows::ApplicationModel::PackageVersion(1, 1, 0, 0));
+            // Confirm the directory did contain package layouts.
+            if (packageIdentity == nullptr)
+            {
+                winrt::throw_hresult(E_INVALIDARG);
+            }
+
+            // Bundle all the packages together.
+            CreateBundleOptions createbundleOptions = CreateBundleOptions();
+            createbundleOptions.OverwriteOutputFileIfExists(true);
+            createbundleOptions.FlatBundle(true);
+            createbundleOptions.Version(packageIdentity.Version());
+            MakeMSIXManager::CreateBundle(packageOutputRootDirectoryPath, bundleOutputFilePath.c_str(), createbundleOptions).get();
 
             // Sign the bundle
             Example_SignPackage(developerCertPfxFile, bundleOutputFilePath);
 
             // Step 2. Create the kozani package from the bundle created in Step 1.
-            CreateKozaniPackageOptions kozaniPackOptions = CreateKozaniPackageOptions();
-            kozaniPackOptions.OverwriteFiles(true);
-            kozaniPackOptions.PackageFilePath(kozaniPackageOutputFilePath);
-            MakeMSIXManager::CreateKozaniPackage(bundleOutputFilePath, kozaniPackOptions).get();
+            CreateKozaniPackageOptions createKozaniPackageOptions = CreateKozaniPackageOptions();
+            createKozaniPackageOptions.OverwriteOutputFileIfExists(true);
+            createKozaniPackageOptions.RemoveExtensions(true);
+            // Append "Kozani" to the package name, and trim non-english languages from the package.
+            std::wstring newPackageName{ packageIdentity.Name() + L"Kozani" };
+            createKozaniPackageOptions.Name(newPackageName);
+            createKozaniPackageOptions.Languages().Append(L"en-US");
+            MakeMSIXManager::CreateKozaniPackage(bundleOutputFilePath, kozaniPackageOutputFilePath.c_str(), createKozaniPackageOptions).get();
 
             // Step 3. Create app attach vhd from the bundle created in Step 1.
             CreateMountableImageOptions mountableImageOptions = CreateMountableImageOptions();
-            mountableImageOptions.ImageFilePath(appAttachImageFilePath);
-            mountableImageOptions.OverwriteFiles(true);
+            mountableImageOptions.OverwriteOutputFileIfExists(true);
             winrt::Windows::Foundation::Collections::IVector<winrt::hstring> packagesToAddToImage{ winrt::single_threaded_vector<winrt::hstring>() };
             packagesToAddToImage.Append(bundleOutputFilePath);
 
-            MakeMSIXManager::CreateMountableImage(packagesToAddToImage, mountableImageOptions).get();
-        }
-        TEST_METHOD(TestBundle)
-        {
-            winrt::init_apartment();
-            try
-            {
-                auto bundleOptions = BundleOptions();
-                bundleOptions.OverwriteFiles(true);
-                bundleOptions.BundleFilePath(L"E:\\test\\bundledOutput.msixbundle");
-                bundleOptions.BundleVersion(winrt::Windows::ApplicationModel::PackageVersion(1, 1, 0, 0));
-
-                MakeMSIXManager::Bundle(L"E:\\test\\unbundledPackageInput", bundleOptions).get();
-            }
-            catch (winrt::hresult_error const& ex)
-            {
-                OutputDebugString(ex.message().c_str());
-                winrt::check_hresult(ex.code());
-            }
-        }
-        TEST_METHOD(TestUnpack)
-        {
-            winrt::init_apartment();
-            try
-            {
-                auto unpackOptions = UnpackOptions();
-                unpackOptions.OverwriteFiles(true);
-                unpackOptions.UnpackedPackageRootDirectory(L"E:\\test\\unpackedPackageOutput");
-
-                MakeMSIXManager::Unpack(L"E:\\test\\package.msix", unpackOptions).get();
-            }
-            catch (winrt::hresult_error const& ex)
-            {
-                OutputDebugString(ex.message().c_str());
-                winrt::check_hresult(ex.code());
-            }
-        }
-        TEST_METHOD(TestCreatePackageScenarios)
-        {
-            CreatePackagesFromFolderExample();
-        }
-
-        void Example_ChangeManifestVersion(std::wstring appxManifestPath, winrt::Windows::ApplicationModel::PackageVersion newVersion)
-        {
-            winrt::Windows::Storage::StorageFile manifestFile = winrt::Windows::Storage::StorageFile::GetFileFromPathAsync(appxManifestPath).get();
-            winrt::Windows::Data::Xml::Dom::XmlDocument docElement = winrt::Windows::Data::Xml::Dom::XmlDocument::LoadFromFileAsync(manifestFile).get();
-
-            std::wstring packageIdentityVersionQuery{ L"/*[local-name()='Package']/*[local-name()='Identity']/@Version" };
-            winrt::Windows::Data::Xml::Dom::IXmlNode identityVersionAttributeNode = docElement.SelectSingleNode(packageIdentityVersionQuery.c_str());
-
-            std::wstring newVersionString = std::to_wstring(newVersion.Major) + L"."
-                + std::to_wstring(newVersion.Minor) + L"."
-                + std::to_wstring(newVersion.Build) + L"."
-                + std::to_wstring(newVersion.Revision);
-            identityVersionAttributeNode.InnerText(newVersionString);
-
-            docElement.SaveToFileAsync(manifestFile).get();
+            MakeMSIXManager::CreateMountableImage(packagesToAddToImage, appAttachImageFilePath.c_str(), mountableImageOptions).get();
         }
 
         void ChangeVersionOfAllPackagesInBundle()
@@ -326,17 +469,16 @@ namespace Test::MakeMSIXTests
 
                 // Unbundle the bundle to its own folder. After the operation the folder will contain the
                 // bundled packages as appx\msix packages, as well as the bundle metadata.
-                auto unbundleOptions = UnbundleOptions();
-                unbundleOptions.OverwriteFiles(true);
-                unbundleOptions.UnbundledPackageRootDirectory(outputDirForBundle.c_str());
-                MakeMSIXManager::Unbundle(bundleFilePath.c_str(), unbundleOptions).get();
+                auto extractBundleOptions = ExtractBundleOptions();
+                extractBundleOptions.OverwriteOutputFilesIfExists(true);
+                MakeMSIXManager::ExtractBundle(bundleFilePath.c_str(), outputDirForBundle.c_str(), extractBundleOptions).get();
 
                 // Iterate through the bundled packages and unpack each one.
                 for (const auto& file : std::filesystem::directory_iterator(outputDirForBundle))
                 {
                     // Skip the metadata files.
                     std::wstring fileExtension{ file.path().extension() };
-                    std::transform(fileExtension.begin(), fileExtension.end(), fileExtension.begin(), tolower);
+                    std::transform(fileExtension.begin(), fileExtension.end(), fileExtension.begin(), towlower);
                     if ((fileExtension.compare(L".appx") != 0) &&
                         (fileExtension.compare(L".msix") != 0))
                     {
@@ -347,12 +489,11 @@ namespace Test::MakeMSIXTests
                     std::filesystem::path outputDirForPackage{ outputDirRootForPackages };
                     outputDirForPackage /= file.path().stem();
 
-                    auto unpackOptions = UnpackOptions();
-                    unpackOptions.OverwriteFiles(true);
-                    unpackOptions.UnpackedPackageRootDirectory(outputDirForPackage.c_str());
-                    MakeMSIXManager::Unpack(file.path().c_str(), unpackOptions).get();
+                    auto extractPackageOptions = ExtractPackageOptions();
+                    extractPackageOptions.OverwriteOutputFilesIfExists(true);
+                    MakeMSIXManager::ExtractPackage(file.path().c_str(), outputDirForPackage.c_str(), extractPackageOptions).get();
                 }
-                                
+
                 std::filesystem::path outputDirRootForPackedPackages{ outputDirRoot };
                 outputDirRootForPackedPackages /= L"packedPackages";
                 std::filesystem::path outputPathForBundle{ outputDirRoot };
@@ -361,27 +502,22 @@ namespace Test::MakeMSIXTests
                 // Iterate through packages and repack each one.
                 for (const auto& packageDir : std::filesystem::directory_iterator(outputDirRootForPackages))
                 {
-                    // Open the manifest and change the version before re-packing
-                    std::filesystem::path appxManifestPath{ packageDir };
-                    appxManifestPath /= L"AppxManifest.xml";
-                    Example_ChangeManifestVersion(appxManifestPath, newVersion);                    
-
                     std::filesystem::path outputPackagePath{ outputDirRootForPackedPackages };
                     std::wstring outputPackageFileName = packageDir.path().filename().wstring() + L".appx";
                     outputPackagePath /= outputPackageFileName;
 
-                    auto packOptions = PackOptions();
-                    packOptions.OverwriteFiles(true);
-                    packOptions.PackageFilePath(outputPackagePath.c_str());
-                    MakeMSIXManager::Pack(packageDir.path().c_str(), packOptions).get();
+                    // Change the version when re-packing
+                    auto createPackageOptions = CreatePackageOptions();
+                    createPackageOptions.OverwriteOutputFileIfExists(true);
+                    createPackageOptions.Version(newVersion);
+                    MakeMSIXManager::CreatePackage(packageDir.path().c_str(), outputPackagePath.c_str(), createPackageOptions).get();
                 }
 
                 // Re-bundle with the new version
-                auto bundleOptions = BundleOptions();
-                bundleOptions.OverwriteFiles(true);
-                bundleOptions.BundleFilePath(outputPathForBundle.c_str());
-                bundleOptions.BundleVersion(newVersion);
-                MakeMSIXManager::Bundle(outputDirRootForPackedPackages.c_str(), bundleOptions).get();
+                auto createBundleOptions = CreateBundleOptions();
+                createBundleOptions.OverwriteOutputFileIfExists(true);
+                createBundleOptions.Version(newVersion);
+                MakeMSIXManager::CreateBundle(outputDirRootForPackedPackages.c_str(), outputPathForBundle.c_str(), createBundleOptions).get();
             }
             catch (winrt::hresult_error const& ex)
             {
@@ -389,37 +525,6 @@ namespace Test::MakeMSIXTests
                 winrt::check_hresult(ex.code());
             }
         }
-
-        TEST_METHOD(TestUnbundle)
-        {
-            ChangeVersionOfAllPackagesInBundle();
-        }
-
-
-        TEST_METHOD(TestConvertPackages)
-        {
-            std::filesystem::path folderContainingPackagedApps{ L"D:\\test\\Packages" };
-            std::filesystem::path outputFolderContainingKozaniApps{ L"D:\\test\\KozaniPackages" };
-            // Iterate through folder and unpack each package.
-            for (const std::filesystem::directory_entry& directoryEntry : std::filesystem::directory_iterator(folderContainingPackagedApps))
-            {
-                if (directoryEntry.is_directory())
-                {
-                    continue;
-                }
-
-                CreateKozaniPackageOptions createKozaniPackageOptions = CreateKozaniPackageOptions();
-                createKozaniPackageOptions.OverwriteFiles(true);
-                std::wstring fileNameWithoutExtension = directoryEntry.path().stem().wstring();
-                std::wstring packageOutputFileName{ fileNameWithoutExtension + L"Kozani" + directoryEntry.path().extension().c_str()};
-                std::filesystem::path packageOutputPath{ outputFolderContainingKozaniApps };
-                packageOutputPath /= packageOutputFileName;
-                createKozaniPackageOptions.PackageFilePath(packageOutputPath.c_str());
-
-                MakeMSIXManager::CreateKozaniPackage(directoryEntry.path().c_str(), createKozaniPackageOptions).get();
-            }
-        }
-
 
         void CreatePackageVariants()
         {
@@ -430,18 +535,16 @@ namespace Test::MakeMSIXTests
             // The build tool wants to create the kozani package at this location
             std::wstring appAttachImageFilePath{ L"D:\\test\\ContosoApp1\\BuildOutput\\Package\\appAttach.vhdx" };
 
-            CreateKozaniPackageOptions kozaniPackOptions = CreateKozaniPackageOptions();
-            kozaniPackOptions.OverwriteFiles(true);
-            kozaniPackOptions.PackageFilePath(kozaniPackageOutputFilePath);
-            MakeMSIXManager::CreateKozaniPackage(bundleOutputFilePath, kozaniPackOptions).get();
+            CreateKozaniPackageOptions createKozaniPackageOptions = CreateKozaniPackageOptions();
+            createKozaniPackageOptions.OverwriteOutputFileIfExists(true);
+            MakeMSIXManager::CreateKozaniPackage(bundleOutputFilePath, kozaniPackageOutputFilePath.c_str(), createKozaniPackageOptions).get();
 
-            CreateMountableImageOptions mountableImageOptions = CreateMountableImageOptions();
-            mountableImageOptions.ImageFilePath(appAttachImageFilePath);
-            mountableImageOptions.OverwriteFiles(true);
+            CreateMountableImageOptions createMountableImageOptions = CreateMountableImageOptions();
+            createMountableImageOptions.OverwriteOutputFileIfExists(true);
             winrt::Windows::Foundation::Collections::IVector<winrt::hstring> packagesToAddToImage{ winrt::single_threaded_vector<winrt::hstring>() };
             packagesToAddToImage.Append(bundleOutputFilePath);
 
-            MakeMSIXManager::CreateMountableImage(packagesToAddToImage, mountableImageOptions).get();
+            MakeMSIXManager::CreateMountableImage(packagesToAddToImage, appAttachImageFilePath, createMountableImageOptions).get();
         }
 
         TEST_METHOD(TestCreatePackageVariants)
@@ -449,5 +552,9 @@ namespace Test::MakeMSIXTests
             CreatePackageVariants();
         }
 
+        TEST_METHOD(TestCreatePackageScenarios)
+        {
+            CreatePackagesFromFolderExample();
+        }
     };
 }

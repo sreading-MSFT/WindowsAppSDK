@@ -19,4 +19,5 @@
 #include "MakeMSIXActivity.h"
 #include "MakeMSIXTraceLogging.h"
 
+#include <string>
 #endif //PCH_H

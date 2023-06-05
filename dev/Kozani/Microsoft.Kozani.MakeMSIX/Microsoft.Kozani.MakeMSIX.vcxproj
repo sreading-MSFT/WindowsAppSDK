@@ -126,38 +126,50 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AppxPackagingUtilities.hpp" />
     <ClInclude Include="Constants.hpp" />
     <ClInclude Include="ContentType.hpp" />
     <ClInclude Include="CreateKozaniPackageOptions.h" />
     <ClInclude Include="CreateKozaniPackageProvider.hpp" />
     <ClInclude Include="CreateMountableImageOptions.h" />
-    <ClInclude Include="PackOptions.h" />
-    <ClInclude Include="BundleOptions.h" />
+    <ClInclude Include="FileSystemUtilities.hpp" />
+    <ClInclude Include="ManifestConverter.hpp" />
+    <ClInclude Include="PackageIdentity.h" />
+    <ClInclude Include="CreatePackageOptions.h" />
+    <ClInclude Include="CreateBundleOptions.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="MakeMSIXActivity.h" />
     <ClInclude Include="MakeMSIXManager.h" />
     <ClInclude Include="MakeMSIXTraceLogging.h" />
+    <ClInclude Include="PackageInformation.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="UnpackOptions.h" />
-    <ClInclude Include="UnbundleOptions.h" />
+    <ClInclude Include="ResourcePriConverter.hpp" />
+    <ClInclude Include="ExtractPackageOptions.h" />
+    <ClInclude Include="ExtractBundleOptions.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AppxPackagingUtilities.cpp" />
     <ClCompile Include="ContentType.cpp" />
     <ClCompile Include="CreateKozaniPackageOptions.cpp" />
     <ClCompile Include="CreateKozaniPackageProvider.cpp" />
     <ClCompile Include="CreateMountableImageOptions.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="PackOptions.cpp" />
-    <ClCompile Include="BundleOptions.cpp" />
+    <ClCompile Include="FileSystemUtilities.cpp" />
+    <ClCompile Include="ManifestConverter.cpp" />
+    <ClCompile Include="PackageIdentity.cpp" />
+    <ClCompile Include="CreatePackageOptions.cpp" />
+    <ClCompile Include="CreateBundleOptions.cpp" />
     <ClCompile Include="MakeMSIXActivity.cpp" />
     <ClCompile Include="MakeMSIXManager.cpp" />
     <ClCompile Include="MakeMSIXTraceLogging.cpp" />
+    <ClCompile Include="PackageInformation.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
-    <ClCompile Include="UnpackOptions.cpp" />
-    <ClCompile Include="UnbundleOptions.cpp" />
+    <ClCompile Include="ResourcePriConverter.cpp" />
+    <ClCompile Include="ExtractPackageOptions.cpp" />
+    <ClCompile Include="ExtractBundleOptions.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="$(MSBuildThisFileDirectory)Microsoft.Kozani.MakeMSIX.idl" />

@@ -27,16 +27,16 @@
     <ClInclude Include="MakeMSIXActivity.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PackOptions.h">
+    <ClInclude Include="CreatePackageOptions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BundleOptions.h">
+    <ClInclude Include="CreateBundleOptions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="UnbundleOptions.h">
+    <ClInclude Include="ExtractBundleOptions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="UnpackOptions.h">
+    <ClInclude Include="ExtractPackageOptions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MakeMSIXManager.h">
@@ -57,15 +57,33 @@
     <ClInclude Include="ContentType.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ManifestConverter.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourcePriConverter.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystemUtilities.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AppxPackagingUtilities.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PackageIdentity.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PackageInformation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PackOptions.cpp">
+    <ClCompile Include="CreatePackageOptions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BundleOptions.cpp">
+    <ClCompile Include="CreateBundleOptions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MakeMSIXTraceLogging.cpp">
@@ -80,10 +98,10 @@
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="UnpackOptions.cpp">
+    <ClCompile Include="ExtractPackageOptions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="UnbundleOptions.cpp">
+    <ClCompile Include="ExtractBundleOptions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MakeMSIXManager.cpp">
@@ -99,6 +117,24 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ContentType.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ManifestConverter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourcePriConverter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystemUtilities.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AppxPackagingUtilities.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PackageIdentity.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PackageInformation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

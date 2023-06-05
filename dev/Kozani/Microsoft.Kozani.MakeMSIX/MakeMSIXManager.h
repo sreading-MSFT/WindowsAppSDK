@@ -10,15 +10,37 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
     {
         MakeMSIXManager() = default;
 
-        static Windows::Foundation::IAsyncAction Pack(hstring directoryPathToPack, PackOptions packOptions);
-        static Windows::Foundation::IAsyncAction Unpack(hstring packageFilePathToUnpack, UnpackOptions unpackOptions);
-        static Windows::Foundation::IAsyncAction Bundle(hstring directoryPathToBundle, BundleOptions bundleOptions);
-        static Windows::Foundation::IAsyncAction Unbundle(hstring packageFilePathToUnbundle, UnbundleOptions unbundleOptions);
-        static Windows::Foundation::IAsyncAction CreateKozaniPackage(hstring packageFilePathToConvert, CreateKozaniPackageOptions createKozaniPackageOptions);
+        static Windows::Foundation::IAsyncAction CreatePackage(
+            hstring inputPath,
+            hstring outputFileName,
+            CreatePackageOptions createPackageOptions);
+
+        static Windows::Foundation::IAsyncAction ExtractPackage(
+            hstring inputFileName,
+            hstring outputPath,
+            ExtractPackageOptions extractPackageOptions);
+
+        static Windows::Foundation::IAsyncAction CreateBundle(
+            hstring inputPath,
+            hstring outputFileName,
+            CreateBundleOptions createBundleOptions);
+
+        static Windows::Foundation::IAsyncAction ExtractBundle(
+            hstring inputFileName,
+            hstring outputPath,
+            ExtractBundleOptions extractBundleOptions);
+
+        static Windows::Foundation::IAsyncAction CreateKozaniPackage(
+            hstring inputFileName,
+            hstring outputFileName,
+            CreateKozaniPackageOptions createKozaniPackageOptions);
+
         static Windows::Foundation::IAsyncAction CreateMountableImage(
-            winrt::Windows::Foundation::Collections::IVector<hstring> packageFilePathsToAdd,
+            winrt::Windows::Foundation::Collections::IVector<hstring> inputFileNames,
+            hstring outputFileName,
             CreateMountableImageOptions createMountableImageOptions);
-        static Windows::Foundation::IAsyncOperation<PackageId> GetPackageIdentity(
+
+        static Windows::Foundation::IAsyncOperation<winrt::Microsoft::Kozani::MakeMSIX::PackageInformation> GetPackageInformation(
             hstring packagePath);
     };
 }

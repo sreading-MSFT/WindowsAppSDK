@@ -63,7 +63,7 @@ namespace Microsoft.Kozani.MakeMSIX
 
         /// ScaleFactors supported by the output package
         /// If field is empty, all scale factors from the original package are maintained.
-        Windows.Foundation.Collections.IVector<UInt32> ScaleFactors{ get; };
+        Windows.Foundation.Collections.IVector<String> ScaleFactors{ get; };
 
         /// Overwrite output file if it already exists.
         /// Defaults to true.
@@ -165,14 +165,13 @@ namespace Microsoft.Kozani.MakeMSIX
 	/// Information about the contents of a package
     runtimeclass PackageInformation
     {
-		/// Identity of the package
         PackageIdentity Identity{ get; };
 
         /// Languages supported by the package
         Windows.Foundation.Collections.IVectorView<String> Languages{ get; };
 
         /// ScaleFactors supported by the package
-        Windows.Foundation.Collections.IVectorView<UInt32> ScaleFactors{ get; };
+        Windows.Foundation.Collections.IVectorView<String> ScaleFactors{ get; };
     }
 
     /// Static methods for creating and unpacking packages.

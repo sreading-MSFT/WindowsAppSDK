@@ -5,6 +5,6 @@
 #include "pch.h"
 #include <string>
 
-HRESULT CreateKozaniPackageLayout(
+HRESULT CreateKozaniPackageLayoutFromPackageLayout(
     _In_ std::wstring sourceDirectoryPath,
     _In_ std::wstring outputDirectoryPath);

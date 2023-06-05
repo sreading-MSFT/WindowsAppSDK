@@ -10,16 +10,13 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
     {
         CreateMountableImageOptions() = default;
 
-        hstring ImageFilePath();
-        void ImageFilePath(hstring);
         hstring PackageRootDirectoryInImage();
         void PackageRootDirectoryInImage(hstring);
-        bool OverwriteFiles();
-        void OverwriteFiles(bool);
+        bool OverwriteOutputFileIfExists();
+        void OverwriteOutputFileIfExists(bool);
 
-        hstring mImageFilePath{};
         hstring mPackageRootDirectoryInImage{};
-        bool mOverwriteFiles{};
+        bool mOverwriteOutputFileIfExists{};
     };
 }
 

@@ -7,14 +7,6 @@
 
 namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
 {
-    void CreateMountableImageOptions::ImageFilePath(hstring value)
-    {
-        mImageFilePath = value;
-    }
-    hstring CreateMountableImageOptions::ImageFilePath()
-    {
-        return mImageFilePath;
-    }
     void CreateMountableImageOptions::PackageRootDirectoryInImage(hstring value)
     {
         mPackageRootDirectoryInImage = value;
@@ -23,12 +15,12 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
     {
         return mPackageRootDirectoryInImage;
     }
-    bool CreateMountableImageOptions::OverwriteFiles()
+    bool CreateMountableImageOptions::OverwriteOutputFileIfExists()
     {
-        return mOverwriteFiles;
+        return mOverwriteOutputFileIfExists;
     }
-    void CreateMountableImageOptions::OverwriteFiles(bool value)
+    void CreateMountableImageOptions::OverwriteOutputFileIfExists(bool value)
     {
-        mOverwriteFiles = value;
+        mOverwriteOutputFileIfExists = value;
     }
 }
