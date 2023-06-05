@@ -33,7 +33,7 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
 
         std::filesystem::path manifestFilePath{ inputPath.c_str() };
         manifestFilePath /= manifestFileName;
-        if (!std::filesystem::is_regular_file(manifestFileName))
+        if (!std::filesystem::is_regular_file(manifestFilePath))
         {
             winrt::throw_hresult(HRESULT(ERROR_FILE_NOT_FOUND));
         }
@@ -64,10 +64,11 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
         winrt::com_ptr<IAppxPackageWriter> packageWriter;
         winrt::check_hresult(appxFactory->CreatePackageWriter(outputPackageStream.get(), &settings, packageWriter.put()));
 
-        for (const auto& file : std::filesystem::directory_iterator(inputPath.c_str()))
+        for (const auto& file : std::filesystem::recursive_directory_iterator(inputPath.c_str()))
         {
-            // Add each file to the package. Skip any footprint files.
-            if (IsFootprintFile(file))
+            // Add each file to the package. Skip directories and footprint files.
+            if (file.is_directory() ||
+                IsFootprintFile(file))
             {
                 continue;
             }
@@ -152,12 +153,6 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
             winrt::throw_hresult(HRESULT(ERROR_FILE_EXISTS));
         }
 
-        std::filesystem::path manifestFilePath = GetManifestFilePath(inputPath.c_str(), PackageType::Bundle);
-        if (!std::filesystem::is_regular_file(manifestFilePath))
-        {
-            winrt::throw_hresult(HRESULT(ERROR_FILE_NOT_FOUND));
-        }
-
         // Package operations are expected to be slow.
         // Calls to the underlying AppxPackaging COM API are synchronous.
         co_await winrt::resume_background();
@@ -174,7 +169,8 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
         for (const auto& file : std::filesystem::directory_iterator(inputPath.c_str()))
         {
             // Add each package to the bundle. Skip any footprint files or other miscellaneous files.
-            if (!IsFileWithPackageExtension(file))
+            if (file.is_directory() ||
+                !IsFileWithPackageExtension(file))
             {
                 continue;
             }
@@ -245,10 +241,6 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
         hstring outputFileName,
         CreateKozaniPackageOptions createKozaniPackageOptions)
     {
-        if (!std::filesystem::is_directory(inputFileName.c_str()))
-        {
-            winrt::throw_hresult(E_INVALIDARG);
-        }
         if (!createKozaniPackageOptions.OverwriteOutputFileIfExists() &&
             std::filesystem::exists(outputFileName.c_str()))
         {
@@ -260,12 +252,18 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
         co_await winrt::resume_background();
 
         PackageType packageType = GetPackageTypeFromPath(inputFileName.c_str());
-        if (packageType == PackageType::LayoutPackageDirectory)
+        switch (packageType)
+        {
+        case PackageType::LayoutPackageDirectory:
         {
             winrt::check_hresult(CreateKozaniPackageLayoutFromPackageLayout(inputFileName.c_str(), outputFileName.c_str()));
+            co_return;
         }
-        else if (packageType == PackageType::Package)
+        case PackageType::Package:
         {
+            // Extract package and then recreate it from directory.
+            // TODO: An improvement here would be to extract the manifest and resource.pri, find the required files
+            // and then only extract those required files.
             std::wstring tempFullPackageUnpackDirectory{};
             winrt::check_hresult(CreateTempDirectory(tempFullPackageUnpackDirectory));
             ExtractPackageOptions extractPackageOptions = ExtractPackageOptions();
@@ -279,8 +277,9 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
             CreatePackageOptions createPackageOptions = CreatePackageOptions();
             createPackageOptions.OverwriteOutputFileIfExists(true);
             CreatePackage(tempKozaniLayoutDirectory.c_str(), outputFileName, createPackageOptions).get();
+            co_return;
         }
-        else if (packageType == PackageType::Bundle)
+        case PackageType::Bundle:
         {
             winrt::Microsoft::Kozani::MakeMSIX::PackageInformation bundlePackageInfo = co_await GetPackageInformation(inputFileName);
             winrt::Microsoft::Kozani::MakeMSIX::PackageIdentity bundlePackageId = bundlePackageInfo.Identity();
@@ -311,8 +310,9 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
             createBundleOptions.Version(originalBundleVersion);
             createBundleOptions.OverwriteOutputFileIfExists(true);
             CreateBundle(tempKozaniBundlePackageDirectory.c_str(), outputFileName, createBundleOptions).get();
+            co_return;
         }
-        else if (packageType == PackageType::LayoutBundleDirectory)
+        case PackageType::LayoutBundleDirectory:
         {
             for (const auto& file : std::filesystem::directory_iterator(inputFileName.c_str()))
             {
@@ -325,21 +325,21 @@ namespace winrt::Microsoft::Kozani::MakeMSIX::implementation
 
                 // Build the temp output path for the package.
                 // <layout directory>\MainPackage.msix becomes <tempKozaniBundlePackageDirectory>\MainPackage.msix
-                std::filesystem::path tempKozaniBundledPackageOutputPath{ outputFileName.c_str()};
+                std::filesystem::path tempKozaniBundledPackageOutputPath{ outputFileName.c_str() };
                 tempKozaniBundledPackageOutputPath /= file.path().filename();
 
                 CreateKozaniPackageOptions bundledKozaniPackageOptions = CreateKozaniPackageOptions();
                 bundledKozaniPackageOptions.OverwriteOutputFileIfExists(true);
                 CreateKozaniPackage(file.path().c_str(), tempKozaniBundledPackageOutputPath.c_str(), bundledKozaniPackageOptions).get();
             }
+            co_return;
         }
-        else
+        default:
         {
             // Package type not recognized
             winrt::throw_hresult(E_INVALIDARG);
         }
-
-        co_return;
+        }
     }
 
     Windows::Foundation::IAsyncAction MakeMSIXManager::CreateMountableImage(

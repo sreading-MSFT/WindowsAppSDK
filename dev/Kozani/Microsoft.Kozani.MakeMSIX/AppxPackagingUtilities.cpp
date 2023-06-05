@@ -28,6 +28,22 @@ UINT64 ConvertToQuadVersion(Windows::ApplicationModel::PackageVersion packageVer
     return quadVersion;
 }
 
+Windows::ApplicationModel::PackageVersion ConvertFromQuadVersion(UINT64 quadVersion)
+{
+    // Strangely, the quad version that the ManifestReader returns has the opposite format
+    // as the one that package creation takes.
+    // a dot-quad version such as 4.2.5.6 is represented as a 64-bit little endian number as
+    //   0004 0002 0005 0006
+    // with the least significant 16-bit word first.
+    Windows::ApplicationModel::PackageVersion packageVersion;
+    packageVersion.Revision = (uint16_t)((quadVersion << 48) >> 48);
+    packageVersion.Build = (uint16_t)((quadVersion << 32) >> 48);
+    packageVersion.Minor = (uint16_t)((quadVersion << 16) >> 48);
+    packageVersion.Major = (uint16_t)((quadVersion) >> 48);
+
+    return packageVersion;
+}
+
 std::wstring GetPackageFamilyNameFromNameAndsPublisher(std::wstring name, std::wstring publisher)
 {
     PACKAGE_ID mainPackageId = { 0 };
@@ -47,16 +63,21 @@ winrt::Microsoft::Kozani::MakeMSIX::PackageIdentity GetPackageIdentityFromManife
 {
     wil::unique_cotaskmem_string packageName;
     winrt::check_hresult(manifestPackageId->GetName(&packageName));
+    winrt::check_pointer(packageName.get());
 
     wil::unique_cotaskmem_string packageFamilyName;
     winrt::check_hresult(manifestPackageId->GetPackageFamilyName(&packageFamilyName));
+    winrt::check_pointer(packageFamilyName.get());
 
     wil::unique_cotaskmem_string packageFullName;
     winrt::check_hresult(manifestPackageId->GetPackageFullName(&packageFullName));
+    winrt::check_pointer(packageFullName.get());
 
     wil::unique_cotaskmem_string publisher;
     winrt::check_hresult(manifestPackageId->GetPublisher(&publisher));
+    winrt::check_pointer(publisher.get());
 
+    // Package resource id is allowed to be null if the package is not a resource.
     wil::unique_cotaskmem_string resourceId;
     winrt::check_hresult(manifestPackageId->GetResourceId(&resourceId));
 
@@ -68,11 +89,8 @@ winrt::Microsoft::Kozani::MakeMSIX::PackageIdentity GetPackageIdentityFromManife
 
     Windows::System::ProcessorArchitecture architecture = Windows::System::ProcessorArchitecture::Unknown;
 
-    Windows::ApplicationModel::PackageVersion packageVersion;
-    packageVersion.Major = 1;
-    packageVersion.Minor = 1;
-    packageVersion.Build = 1;
-    packageVersion.Revision = 0;
+    // TODO: Convert package version from uint
+    Windows::ApplicationModel::PackageVersion packageVersion = ConvertFromQuadVersion(packageManifestVersion);
 
 
     auto packageId = winrt::make_self<winrt::Microsoft::Kozani::MakeMSIX::implementation::PackageIdentity>();
@@ -81,7 +99,10 @@ winrt::Microsoft::Kozani::MakeMSIX::PackageIdentity GetPackageIdentityFromManife
     packageId->FamilyName(packageFamilyName.get());
     packageId->FullName(packageFullName.get());
     packageId->Publisher(publisher.get());
-    packageId->ResourceId(resourceId.get());
+    if (resourceId.get())
+    {
+        packageId->ResourceId(resourceId.get());
+    }
     packageId->Architecture(architecture);
     return *packageId;
 }

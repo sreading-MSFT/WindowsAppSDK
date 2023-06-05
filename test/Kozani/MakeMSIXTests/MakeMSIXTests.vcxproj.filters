@@ -16,12 +16,30 @@
     <Filter Include="data">
       <UniqueIdentifier>{fafaf972-534a-4b7f-8168-ffad699c3e71}</UniqueIdentifier>
     </Filter>
+    <Filter Include="data\TestPackageLayout">
+      <UniqueIdentifier>{6875af1d-324a-4586-977d-f4bd0901e162}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="data\TestBundleLayout">
+      <UniqueIdentifier>{08e5ff2f-c326-4a41-9cf0-f2b7061931c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="data\TestPackageLayout\images">
+      <UniqueIdentifier>{bfa28028-c603-4f32-a225-7c49e5bc751a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="data\TestBundleLayout\AppxMetadata">
+      <UniqueIdentifier>{74eea796-92e4-41f7-8046-141e421ffc34}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="data\TestPackageLayout\AppxMetadata">
+      <UniqueIdentifier>{0d148ccc-3e43-45f8-ae06-0cddbb206cf5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MakeMSIXTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MSIXManagerAPISpecExamples.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -39,6 +57,54 @@
   <ItemGroup>
     <CopyFileToFolders Include="data\TestPackage.msix">
       <Filter>data</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="data\TestBundle.msixbundle">
+      <Filter>data</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="data\TestBundleLayout\TestPackage.appx">
+      <Filter>data\TestBundleLayout</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="data\TestBundleLayout\AppxBlockMap.xml">
+      <Filter>data\TestBundleLayout</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="data\TestBundleLayout\[Content_Types].xml">
+      <Filter>data\TestBundleLayout</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="data\TestBundleLayout\AppxMetadata\AppxBundleManifest.xml">
+      <Filter>data\TestBundleLayout\AppxMetadata</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="data\TestPackageLayout\resources.pri">
+      <Filter>data\TestPackageLayout</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="data\TestPackageLayout\app.xbf">
+      <Filter>data\TestPackageLayout</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="data\TestPackageLayout\AppxBlockMap.xml">
+      <Filter>data\TestPackageLayout</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="data\TestPackageLayout\AppxManifest.xml">
+      <Filter>data\TestPackageLayout</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="data\TestPackageLayout\AppxSignature.p7x">
+      <Filter>data\TestPackageLayout</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="data\TestPackageLayout\cpp_loc.exe">
+      <Filter>data\TestPackageLayout</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="data\TestPackageLayout\cpp_loc.winmd">
+      <Filter>data\TestPackageLayout</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="data\TestPackageLayout\logo.png">
+      <Filter>data\TestPackageLayout</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="data\TestPackageLayout\mainpage.xbf">
+      <Filter>data\TestPackageLayout</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="data\TestPackageLayout\AppxMetadata\CodeIntegrity.cat">
+      <Filter>data\TestPackageLayout\AppxMetadata</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="data\TestPackageLayout\images\circle.lang-en-us.png">
+      <Filter>data\TestPackageLayout\images</Filter>
     </CopyFileToFolders>
   </ItemGroup>
 </Project>
